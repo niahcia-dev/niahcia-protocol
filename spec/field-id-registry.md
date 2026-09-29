@@ -453,3 +453,14 @@ Exclusion is a preimage rule, not a renumbering rule.
 13  provider_service_node_id
 14  signature
 ```
+
+
+## StorageChallenge requested_ranges nested encoding
+
+For `StorageChallenge` schema version 1, field `7 requested_ranges` is an array of four-element arrays:
+
+```text
+[ chunk_index, segment_index, offset, length ]
+```
+
+The positions are permanent within schema version 1. They are not map-field IDs and therefore do not consume global field-registry numbers.
