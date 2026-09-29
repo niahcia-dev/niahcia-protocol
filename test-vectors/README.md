@@ -49,3 +49,5 @@ These are protocol-development vectors, not mainnet data. Changing a Draft schem
 - `service-epoch-report-v1.json` — locked NCE/1, service-node identity, report-ID, signing-digest, and secp256k1 signature vector for `ServiceEpochReportV1`.
 
 - `storage-commitment-v1.json` — locked NCE/1, service-node identity, commitment-ID, signing-digest, and secp256k1 signature vector for `StorageCommitmentV1`.
+
+- `storage-challenge-v1.json` — locked NCE/1, challenge-seed, challenge-ID, signing-digest, and secp256k1 signature vector for `StorageChallengeV1`.
