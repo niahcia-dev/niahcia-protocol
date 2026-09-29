@@ -195,3 +195,26 @@ clients/full nodes
 ```
 
 This separation is intentional and fundamental.
+
+
+## Proof-of-service protocol
+
+Storage and archive reward eligibility is defined by `proof-of-service-v1.md`.
+
+The initial measurable flow is:
+
+```text
+StorageCommitmentV1
+        ↓
+StorageChallengeV1
+        ↓
+StorageResponseV1
+        ↓
+verified evidence
+        ↓
+ServiceEpochReportV1
+```
+
+The candidate service epoch is 720 blocks, approximately six hours at the 30-second target interval.
+
+Proof-of-service is explicitly payment evidence only. It adds no chain work and confers no fork-choice authority.
