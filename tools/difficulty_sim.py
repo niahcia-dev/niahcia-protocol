@@ -110,9 +110,54 @@ def main():
     summarize_step("2x", rejected_raw_window_target)
 
     print("\nNormalized candidate — seeded stochastic steady-state")
-    for scenario in ("steady", "2x", "10x", "90pct_drop"):
+    for scenario in ("steady", "2x", "10x", "90pct_drop", "oscillating"):
         stochastic_summary(scenario, normalized_next_target)
+
+    print("\nASERT research candidate — seeded stochastic mean solve times")
+    for half_life in ASERT_HALF_LIVES:
+        print(f"half-life={half_life}s")
+        for scenario in ("steady", "2x", "10x", "90pct_drop", "oscillating"):
+            print(f"  {scenario:>12}: {asert_summary(scenario, half_life):.3f}s")
 
 
 if __name__ == "__main__":
     main()
+
+
+# --- ASERT research candidate -------------------------------------------------
+
+ASERT_HALF_LIVES = (2160, 4320, 8640)
+
+
+def asert_next_target(anchor_target: float, elapsed_time: float, elapsed_blocks: int, half_life: int) -> float:
+    """Simulation-only floating-point form. Consensus MUST use fixed-point integers."""
+    exponent = (elapsed_time - TARGET_SECONDS * elapsed_blocks) / half_life
+    return anchor_target * (2.0 ** exponent)
+
+
+def run_asert(name: str, blocks: int = 3000, half_life: int = 4320, seed: int = 1):
+    rng = random.Random(seed)
+    anchor_target = 1.0
+    elapsed_time = 0.0
+    target = anchor_target
+    rows = []
+
+    for height in range(1, blocks + 1):
+        hashrate = hash_rate_for(name, height)
+        expected = TARGET_SECONDS / (hashrate * target)
+        solve = rng.expovariate(1.0 / expected)
+        elapsed_time += solve
+        next_target = asert_next_target(anchor_target, elapsed_time, height, half_life)
+        rows.append((height, hashrate, solve, target, next_target))
+        target = next_target
+
+    return rows
+
+
+def asert_summary(name: str, half_life: int, seeds: int = 20):
+    means = []
+    for seed in range(1, seeds + 1):
+        rows = run_asert(name, half_life=half_life, seed=seed)
+        tail = rows[1000:]
+        means.append(sum(row[2] for row in tail) / len(tail))
+    return sum(means) / len(means)
