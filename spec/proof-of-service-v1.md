@@ -134,3 +134,33 @@ It MUST NOT:
 - finalize blocks,
 - veto valid blocks,
 - substitute for RandomX.
+
+
+## Verified response to epoch accounting
+
+The reference node connects a signed storage response to epoch accounting only after all of the following succeed:
+
+1. the challenge signature verifies for the claimed challenger identity,
+2. the response signature verifies for the claimed service-node identity,
+3. the challenge height falls inside the active service epoch,
+4. challenge and commitment IDs match,
+5. the response meets the challenge deadline,
+6. every requested segment is matched by the corresponding response proof,
+7. range proofs authenticate returned bytes to the committed `range_root`,
+8. manifest proofs authenticate each `range_root` and chunk tuple to the committed manifest root.
+
+The accepted evidence key is:
+
+```text
+evidence_key =
+  keccak256(
+    "NIAHCIA/SERVICE-EVIDENCE/V1"
+    || challenge_id
+    || service_node_id
+    || response_id
+  )
+```
+
+Only after that key passes duplicate-replay rejection may the epoch accumulator increment successful challenges, verified bytes, requester diversity, and challenge-block diversity.
+
+This accounting path remains service-layer state. It does not add chain work or participate in fork choice.
