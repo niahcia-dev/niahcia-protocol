@@ -1,0 +1,31 @@
+{
+  "name": "NIAHCIA BlockHeaderV1 development vector 1",
+  "status": "draft",
+  "encoding": "fixed-width-big-endian",
+  "canonical_header_length": 164,
+  "block_hash_domain_ascii": "NIAHCIA/BLOCK-HEADER/V1",
+  "mining_template_domain_ascii": "NIAHCIA/MINING-TEMPLATE/V1",
+  "header": {
+    "version": 1,
+    "parent_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "height": 42,
+    "timestamp": 1800000000,
+    "transactions_root": "2222222222222222222222222222222222222222222222222222222222222222",
+    "execution_root": "3333333333333333333333333333333333333333333333333333333333333333",
+    "target": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "nonce": 72623859790382856,
+    "extra_nonce": 1230066625199609624
+  },
+  "integer_hex": {
+    "version_u32_be": "00000001",
+    "height_u64_be": "000000000000002a",
+    "timestamp_u64_be": "000000006b49d200",
+    "nonce_u64_be": "0102030405060708",
+    "extra_nonce_u64_be": "1112131415161718"
+  },
+  "notes": [
+    "The canonical header is exactly 164 bytes.",
+    "Hash outputs will be added as immutable conformance values once the block-header implementation test generator lands.",
+    "This is development protocol data, not mainnet genesis data."
+  ]
+}
