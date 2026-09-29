@@ -47,3 +47,5 @@ Typed logical source fixtures and cross-language encoder tests will be added as 
 These are protocol-development vectors, not mainnet data. Changing a Draft schema may intentionally require replacing a vector before Protocol v1 is frozen.
 
 - `service-epoch-report-v1.json` — locked NCE/1, service-node identity, report-ID, signing-digest, and secp256k1 signature vector for `ServiceEpochReportV1`.
+
+- `storage-commitment-v1.json` — locked NCE/1, service-node identity, commitment-ID, signing-digest, and secp256k1 signature vector for `StorageCommitmentV1`.
