@@ -20,20 +20,22 @@ The 4320-second half-life equals 72 minutes, or 144 target blocks.
 
 ## Inputs
 
-The exact target computation consumes:
+The exact target computation consumes an already-accepted current block:
 
 ```text
 anchor_target
 anchor_height
 anchor_parent_time
-evaluation_height
-evaluation_time
+current_height
+current_time
 pow_limit
 ```
 
+The function returns the target for the block **after** `current_height`. A miner cannot choose the target of the block it is currently mining by choosing that block's timestamp.
+
 All target values are exact unsigned 256-bit integers.
 
-The evaluation height MUST be greater than or equal to the anchor height.
+The current height MUST be greater than or equal to the anchor height.
 
 ## Conceptual formula
 
