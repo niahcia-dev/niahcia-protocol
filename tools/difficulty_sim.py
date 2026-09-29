@@ -129,10 +129,6 @@ def main():
         )
 
 
-if __name__ == "__main__":
-    main()
-
-
 # --- ASERT research candidate -------------------------------------------------
 
 ASERT_HALF_LIVES = (2160, 4320, 8640)
@@ -221,3 +217,150 @@ def timestamp_attack_summary(policy: str):
     mean_solve = sum(row[1] for row in tail) / len(tail)
     final = rows[-1]
     return mean_solve, final[4], final[3] - final[2]
+
+
+# --- Partial attacker / botnet stress tests -----------------------------------
+
+def run_partial_timestamp_attacker(
+    attacker_share: float,
+    blocks: int = 3000,
+    seed: int = 1,
+    half_life: int = 4320,
+    attack_start: int = 200,
+):
+    """Model a miner coalition using minimum-MTP timestamps on blocks it wins.
+
+    Honest miners use simulated real time, subject to the same MTP validity
+    floor. The target for each block is derived from the already-accepted
+    parent chain; a miner cannot choose the target of the block it is mining.
+    """
+    rng = random.Random(seed)
+    real_time = 0.0
+    header_times = []
+    target = 1.0
+    rows = []
+
+    for height in range(1, blocks + 1):
+        total_hash = 1.0
+        expected = TARGET_SECONDS / (total_hash * target)
+        solve = rng.expovariate(1.0 / expected)
+        real_time += solve
+
+        attacker_wins = height >= attack_start and rng.random() < attacker_share
+
+        if not header_times:
+            header_time = max(1, int(real_time))
+        elif attacker_wins:
+            header_time = median_time(header_times) + 1
+        else:
+            header_time = max(int(real_time), median_time(header_times) + 1)
+
+        # Existing consensus future-time bound.
+        header_time = min(header_time, int(real_time) + 90)
+        header_times.append(header_time)
+
+        # This accepted block affects the target of the NEXT block.
+        next_target = asert_next_target(1.0, header_time, height, half_life)
+        rows.append(
+            (height, solve, real_time, header_time, target, next_target, attacker_wins)
+        )
+        target = next_target
+
+    return rows
+
+
+def partial_attacker_summary(attacker_share: float, seeds: int = 20):
+    mean_solves = []
+    mean_targets = []
+    attacker_blocks = []
+    max_lags = []
+
+    for seed in range(1, seeds + 1):
+        rows = run_partial_timestamp_attacker(attacker_share, seed=seed)
+        tail = rows[500:]
+        mean_solves.append(sum(row[1] for row in tail) / len(tail))
+        mean_targets.append(sum(row[4] for row in tail) / len(tail))
+        attacker_blocks.append(sum(1 for row in tail if row[6]) / len(tail))
+        max_lags.append(max(row[2] - row[3] for row in tail))
+
+    return {
+        "share": attacker_share,
+        "mean_solve": sum(mean_solves) / len(mean_solves),
+        "mean_target": sum(mean_targets) / len(mean_targets),
+        "won_fraction": sum(attacker_blocks) / len(attacker_blocks),
+        "mean_max_header_lag": sum(max_lags) / len(max_lags),
+    }
+
+
+def run_botnet_burst(
+    botnet_multiplier: float,
+    burst_start: int = 500,
+    burst_blocks: int = 120,
+    blocks: int = 2000,
+    seed: int = 1,
+    half_life: int = 4320,
+):
+    """Model temporary stolen CPU hashrate joining and then disappearing.
+
+    A multiplier of 10 means aggregate hashrate is 10x baseline during the
+    burst. Timestamps remain honest in this scenario.
+    """
+    rng = random.Random(seed)
+    real_time = 0.0
+    header_times = []
+    target = 1.0
+    rows = []
+
+    burst_end = burst_start + burst_blocks
+
+    for height in range(1, blocks + 1):
+        hash_multiplier = (
+            botnet_multiplier if burst_start <= height < burst_end else 1.0
+        )
+        expected = TARGET_SECONDS / (hash_multiplier * target)
+        solve = rng.expovariate(1.0 / expected)
+        real_time += solve
+
+        if header_times:
+            header_time = max(int(real_time), median_time(header_times) + 1)
+        else:
+            header_time = max(1, int(real_time))
+        header_times.append(header_time)
+
+        next_target = asert_next_target(1.0, header_time, height, half_life)
+        rows.append((height, solve, hash_multiplier, target, next_target))
+        target = next_target
+
+    return rows
+
+
+def botnet_burst_summary(multiplier: float, seeds: int = 20):
+    during = []
+    post = []
+    final_targets = []
+
+    for seed in range(1, seeds + 1):
+        rows = run_botnet_burst(multiplier, seed=seed)
+        burst = [r for r in rows if 500 <= r[0] < 620]
+        recovery = [r for r in rows if 620 <= r[0] < 900]
+        during.append(sum(r[1] for r in burst) / len(burst))
+        post.append(sum(r[1] for r in recovery) / len(recovery))
+        final_targets.append(rows[-1][4])
+
+    return {
+        "multiplier": multiplier,
+        "burst_mean_solve": sum(during) / len(during),
+        "post_burst_mean_solve": sum(post) / len(post),
+        "final_target": sum(final_targets) / len(final_targets),
+    }
+
+
+if __name__ == "__main__":
+    main()
+    print("\nPartial timestamp attacker — 4320-second half-life")
+    for share in (0.10, 0.25, 0.33, 0.40, 0.50, 0.60):
+        print(partial_attacker_summary(share))
+
+    print("\nTemporary botnet hashrate bursts — honest timestamps")
+    for multiplier in (2.0, 5.0, 10.0, 25.0):
+        print(botnet_burst_summary(multiplier))
