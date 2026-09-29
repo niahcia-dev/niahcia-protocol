@@ -53,6 +53,20 @@ Required defenses include:
 - independent peer discovery
 - service reputation evidence
 
+### Service-node capture and false observations
+
+A service-node cartel may attempt to publish false reorg warnings, suppress archival data, bias relay paths, or present a coordinated false view of the chain.
+
+Defenses include:
+
+- no service-node vote in fork choice,
+- independent PoW/header verification by clients,
+- operator-diverse observation sources,
+- signed observation records for accountability,
+- competing-provider retrieval,
+- retention of stale branches and reorg evidence,
+- treating service-node disagreement as telemetry rather than consensus.
+
 ## Agent threats
 
 - malicious system instructions
