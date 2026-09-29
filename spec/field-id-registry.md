@@ -296,3 +296,160 @@ Examples:
 - a stable `agent_id` is included in normal Agent serialization, but its creation derivation uses the separate `ID/AGENT` formula
 
 Exclusion is a preimage rule, not a renumbering rule.
+
+
+## StorageCommitment — object type 0x0205
+
+```text
+1   schema_version
+2   commitment_id
+3   service_node_id
+4   operator_id
+5   service_class
+6   object_id
+7   manifest_root
+8   chunk_count
+9   total_bytes
+10  retained_from_block
+11  retained_until_block
+12  commitment_nonce
+13  created_block
+14  signature
+```
+
+## StorageChallenge — object type 0x0206
+
+```text
+1   schema_version
+2   challenge_id
+3   commitment_id
+4   challenge_block_id
+5   challenge_height
+6   challenge_seed
+7   requested_ranges
+8   issued_at
+9   response_deadline
+10  challenger_id
+11  signature
+```
+
+## StorageResponse — object type 0x0207
+
+```text
+1   schema_version
+2   response_id
+3   challenge_id
+4   commitment_id
+5   service_node_id
+6   answered_at
+7   range_proofs
+8   response_bytes_hash
+9   signature
+```
+
+## ServiceEpochReport — object type 0x0208
+
+```text
+1   schema_version
+2   report_id
+3   service_node_id
+4   operator_id
+5   epoch_start_height
+6   epoch_end_height
+7   commitments_sampled
+8   challenges_passed
+9   challenges_failed
+10  deadlines_missed
+11  verified_bytes_served
+12  distinct_requester_count
+13  distinct_challenge_block_count
+14  service_classes
+15  evidence_root
+16  eligibility_weight
+17  created_block
+18  signature
+```
+
+## RelayReceipt — object type 0x0209
+
+```text
+1   schema_version
+2   relay_receipt_id
+3   object_type
+4   object_id
+5   sender_service_node_id
+6   receiver_peer_id
+7   received_at_bucket
+8   transport_session_id
+9   receiver_signature
+```
+
+## AvailabilityAttestation — object type 0x020A
+
+```text
+1   schema_version
+2   attestation_id
+3   service_node_id
+4   service_class
+5   requester_id
+6   object_id
+7   request_type
+8   request_started_at
+9   request_completed_at
+10  bytes_verified
+11  evidence_hash
+12  requester_signature
+```
+
+## ChainObservation — object type 0x020B
+
+```text
+1   schema_version
+2   network_id
+3   observer_service_node_id
+4   observation_sequence
+5   observed_at
+6   tip_block_id
+7   height
+8   cumulative_work
+9   latest_timestamp
+10  signature
+```
+
+## ReorgObservation — object type 0x020C
+
+```text
+1   schema_version
+2   network_id
+3   observer_service_node_id
+4   observation_sequence
+5   observed_at
+6   old_tip
+7   new_tip
+8   fork_point
+9   old_height
+10  new_height
+11  reorg_depth
+12  old_cumulative_work
+13  new_cumulative_work
+14  signature
+```
+
+## SnapshotManifest — object type 0x020D
+
+```text
+1   schema_version
+2   network_id
+3   height
+4   block_id
+5   cumulative_work
+6   state_root
+7   execution_root
+8   chunk_size
+9   chunk_count
+10  chunk_manifest_root
+11  total_bytes
+12  created_at
+13  provider_service_node_id
+14  signature
+```
