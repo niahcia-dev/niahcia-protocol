@@ -1,78 +1,129 @@
-# NIAHCIA ASERT Difficulty Candidate
+# NIAHCIA ASERT Difficulty Adjustment V1
 
 ## Status
 
-Research candidate. **Not frozen consensus.**
+Draft consensus candidate. **Not frozen.**
 
-The first rolling-window difficulty candidates exposed two undesirable behaviors in simulation:
+NIAHCIA uses an anchor-based ASERT-style difficulty controller as the leading candidate for Protocol v1.
 
-1. raw moving-window target adjustment oscillated badly after large hashrate changes,
-2. even the target-normalized rolling estimator performed poorly under deliberate periodic hashrate switching.
+The moving-window candidates were rejected in simulation because they produced undesirable periodic feedback behavior under hash-rate switching.
 
-NIAHCIA is therefore evaluating an anchor-based ASERT-style difficulty algorithm instead of trying to tune a moving average indefinitely.
-
-## Why ASERT is being evaluated
-
-Bitcoin Cash adopted ASERT specifically to address periodic difficulty/hashrate oscillation in its prior moving-average DAA.
-
-The useful architectural property is that the next target is derived from an absolute schedule relative to an anchor block rather than feeding a moving window back into itself.
-
-For NIAHCIA:
+## Constants
 
 ```text
-ideal_block_time = 30 seconds
+IDEAL_BLOCK_TIME = 30 seconds
+HALF_LIFE        = 4320 seconds
+RADIX            = 65536
 ```
 
-Conceptually:
+The 4320-second half-life equals 72 minutes, or 144 target blocks.
+
+## Inputs
+
+The exact target computation consumes:
+
+```text
+anchor_target
+anchor_height
+anchor_parent_time
+evaluation_height
+evaluation_time
+pow_limit
+```
+
+All target values are exact unsigned 256-bit integers.
+
+The evaluation height MUST be greater than or equal to the anchor height.
+
+## Conceptual formula
 
 ```text
 next_target =
   anchor_target
   * 2^(
       (
-        elapsed_time
-        - ideal_block_time * elapsed_blocks
+        time_delta
+        - IDEAL_BLOCK_TIME * (height_delta + 1)
       )
-      / half_life
+      / HALF_LIFE
     )
 ```
 
-Consensus implementation MUST use deterministic integer/fixed-point arithmetic. Floating point is simulation-only.
-
-## Candidate half-lives
-
-Because NIAHCIA targets 30-second blocks, directly copying Bitcoin Cash's two-day half-life would be far too sluggish in block-count terms.
-
-The current simulation compares:
+where:
 
 ```text
-2160 seconds  = 72 target blocks
-4320 seconds  = 144 target blocks
-8640 seconds  = 288 target blocks
+time_delta   = evaluation_time - anchor_parent_time
+height_delta = evaluation_height - anchor_height
 ```
 
-The **4320-second (72-minute) half-life is the current leading candidate**.
+## Deterministic fixed-point algorithm
 
-It is not frozen.
+Consensus implementations MUST NOT use floating point.
 
-## Initial simulation
+Define:
 
-Seeded stochastic simulations were run against:
+```text
+radix = 65536
 
-- steady hashrate,
-- 2x step,
-- 10x step,
-- 90% hashrate loss,
-- 16x periodic switching (0.25x / 4x),
-- recurring 10x burst mining.
+exponent =
+  trunc_div(
+    (
+      time_delta
+      - 30 * (height_delta + 1)
+    )
+    * radix,
+    4320
+  )
 
-The anchor-based candidate with a 4320-second half-life held long-run averages close to the 30-second target in all of these initial scenarios.
+num_shifts =
+  arithmetic_shift_right(exponent, 16)
 
-This was materially better than the target-normalized 60-block moving-window candidate under periodic switching.
+fractional =
+  exponent - num_shifts * radix
+
+factor =
+  (
+    195766423245049 * fractional
+    + 971821376 * fractional^2
+    + 5127 * fractional^3
+    + 2^47
+  ) >> 48
+  + 65536
+
+next_target =
+  anchor_target * factor
+
+if num_shifts < 0:
+  next_target >>= -num_shifts
+else:
+  next_target <<= num_shifts
+
+next_target >>= 16
+```
+
+Then:
+
+```text
+if next_target == 0:
+    next_target = 1
+
+if next_target > pow_limit:
+    next_target = pow_limit
+```
+
+Signed division in the exponent step MUST truncate toward zero.
+
+The right shift used to obtain `num_shifts` MUST be arithmetic for negative values.
+
+## Origin of the polynomial
+
+The integer polynomial is adapted from the published Bitcoin Cash ASERT `aserti3-2d` specification, while NIAHCIA changes the target interval and half-life for its own 30-second PoW chain.
+
+NIAHCIA stores full 256-bit targets directly in `BlockHeaderV1`, so no Bitcoin compact-`nBits` conversion is part of the NIAHCIA algorithm.
 
 ## Anchor
 
-The eventual specification must define an immutable anchor tuple:
+Every network MUST define an immutable ASERT anchor context:
 
 ```text
 anchor_height
@@ -80,23 +131,47 @@ anchor_parent_time
 anchor_target
 ```
 
-For a network launched with ASERT from genesis, the network-parameter specification may define an equivalent genesis-relative anchor representation.
+For a network launched with ASERT from genesis, the network-parameter specification must define an equivalent deterministic genesis-relative anchor.
 
-## Timestamp source
+The final devnet/testnet/mainnet anchor rules remain to be frozen.
 
-ASERT still depends on block timestamps, so NIAHCIA's median-time-past and future-drift validity rules remain required.
+## Timestamp dependency
 
-The adversarial timestamp simulation must be completed before consensus is frozen.
+ASERT consumes consensus block timestamps.
 
-## Required before adoption
+Therefore the NIAHCIA median-time-past and future-drift validation rules are part of the security boundary.
 
-- exact fixed-point integer algorithm selected,
-- half-life simulation expanded,
-- timestamp-game analysis,
-- launch/startup analysis,
-- pow-limit behavior,
-- exact arithmetic vectors,
-- Rust implementation,
+The difficulty algorithm does not use local wall-clock time directly.
+
+## PoW limit
+
+The output target is capped at the network's `pow_limit`.
+
+There is no implicit mainnet emergency-difficulty reset.
+
+Any special devnet/testnet recovery rule must be explicit in that network's parameters.
+
+## Implementation
+
+The reference node now contains a development fixed-point implementation matching this draft.
+
+Machine-readable vectors live in:
+
+```text
+test-vectors/difficulty-asert-v1.json
+```
+
+## Before consensus freeze
+
+Still required:
+
+- adversarial timestamp simulation,
+- long-outage simulation,
+- low-hashrate launch simulation,
+- pow-limit saturation tests,
+- larger fixed-point vector set,
+- anchor/genesis decision,
+- final network `pow_limit`,
 - independent implementation reproduction.
 
-Until then, both the earlier moving-window code and this ASERT document are development experiments rather than mainnet consensus.
+Until these are complete, ASERT remains the leading candidate rather than frozen mainnet law.
