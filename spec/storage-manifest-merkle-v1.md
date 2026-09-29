@@ -14,13 +14,14 @@ Each chunk entry contains:
 chunk_index
 chunk_length
 chunk_hash
+range_root
 ```
 
 `chunk_index` is the zero-based position in the ordered manifest.
 
 `chunk_hash` is the content hash of the complete chunk.
 
-For proof-of-service manifests, each chunk entry SHOULD also commit to a `range_root` defined by `storage-range-merkle-v1.md`. The manifest leaf format must be upgraded to include that field before the proof format is frozen.
+`range_root` is the intra-chunk Merkle root defined by `storage-range-merkle-v1.md`.
 
 ## Leaf hash
 
@@ -31,6 +32,7 @@ leaf =
     || chunk_index_u64_be
     || chunk_length_u64_be
     || chunk_hash
+    || range_root
   )
 ```
 
@@ -90,7 +92,8 @@ The manifest commits simultaneously to:
 
 - chunk ordering,
 - chunk lengths,
-- chunk hashes.
+- chunk hashes,
+- intra-chunk range roots.
 
 Changing a chunk's bytes, length, position, or sibling path changes the root.
 
