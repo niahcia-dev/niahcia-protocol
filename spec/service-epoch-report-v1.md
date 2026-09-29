@@ -257,3 +257,22 @@ Verification MUST:
 - reject signatures that do not verify for the supplied public key.
 
 The public-key-to-`service_node_id` binding is a separate service-identity rule and must be defined before public reward settlement is enabled.
+
+
+## Service-node identity binding
+
+`service_node_id` is bound to the node's secp256k1 public key.
+
+The public key is first normalized to compressed SEC1 form, then:
+
+```text
+service_node_id =
+  keccak256(
+    "NIAHCIA/SERVICE-NODE-ID/V1"
+    || compressed_secp256k1_public_key
+  )
+```
+
+Signature verification MUST reject a report when the supplied public key does not derive the report's `service_node_id`.
+
+This binds authorship to the service identity without granting that identity any consensus privilege.
