@@ -72,3 +72,13 @@ The first concrete chain-consensus specifications are now tracked in:
 - `spec/transaction-merkle-v1.md` — NIAHCIA-native transaction Merkle commitment
 
 These specifications deliberately keep Ethereum/Reth block identity outside NIAHCIA consensus.
+
+## Service-node security boundary
+
+Service/storage nodes may provide archive, snapshot, relay, reorg-watch, model-storage, agent-storage, and related services.
+
+They strengthen network survivability and observability but **never vote on the canonical chain**.
+
+Canonical chain selection remains RandomX PoW plus cumulative work.
+
+See `spec/service-node-security-v1.md`.
