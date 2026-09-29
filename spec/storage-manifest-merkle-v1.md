@@ -20,6 +20,8 @@ chunk_hash
 
 `chunk_hash` is the content hash of the complete chunk.
 
+For proof-of-service manifests, each chunk entry SHOULD also commit to a `range_root` defined by `storage-range-merkle-v1.md`. The manifest leaf format must be upgraded to include that field before the proof format is frozen.
+
 ## Leaf hash
 
 ```text
