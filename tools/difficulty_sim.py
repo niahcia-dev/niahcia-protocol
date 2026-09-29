@@ -119,6 +119,15 @@ def main():
         for scenario in ("steady", "2x", "10x", "90pct_drop", "oscillating"):
             print(f"  {scenario:>12}: {asert_summary(scenario, half_life):.3f}s")
 
+    print("\nASERT timestamp-adversary stress test — 4320-second half-life")
+    for policy in ("honest", "future_90", "minimum_mtp"):
+        mean_solve, final_target, clock_offset = timestamp_attack_summary(policy)
+        print(
+            f"  {policy:>12}: mean solve={mean_solve:.3f}s "
+            f"final target={final_target:.6f} "
+            f"header-real offset={clock_offset:.1f}s"
+        )
+
 
 if __name__ == "__main__":
     main()
@@ -161,3 +170,54 @@ def asert_summary(name: str, half_life: int, seeds: int = 20):
         tail = rows[1000:]
         means.append(sum(row[2] for row in tail) / len(tail))
     return sum(means) / len(means)
+
+
+# --- Timestamp-adversary stress tests -----------------------------------------
+
+def median_time(values):
+    window = sorted(values[-11:])
+    return window[len(window) // 2]
+
+
+def run_timestamp_attack(policy: str, blocks: int = 500, seed: int = 1, half_life: int = 4320):
+    """Worst-case timestamp stress model for consensus research."""
+    rng = random.Random(seed)
+    real_time = 0.0
+    header_times = []
+    target = 1.0
+    rows = []
+
+    for height in range(1, blocks + 1):
+        expected = TARGET_SECONDS / target
+        solve = rng.expovariate(1.0 / expected)
+        real_time += solve
+
+        if height < 100 or policy == "honest":
+            candidate = int(real_time)
+            if header_times:
+                candidate = max(candidate, header_times[-1] + 1)
+        elif policy == "future_90":
+            candidate = int(real_time) + 90
+        elif policy == "minimum_mtp":
+            candidate = median_time(header_times) + 1
+        else:
+            raise ValueError(policy)
+
+        if header_times:
+            candidate = max(candidate, median_time(header_times) + 1)
+
+        candidate = min(candidate, int(real_time) + 90)
+        header_times.append(candidate)
+
+        target = asert_next_target(1.0, candidate, height, half_life)
+        rows.append((height, solve, real_time, candidate, target))
+
+    return rows
+
+
+def timestamp_attack_summary(policy: str):
+    rows = run_timestamp_attack(policy)
+    tail = rows[100:]
+    mean_solve = sum(row[1] for row in tail) / len(tail)
+    final = rows[-1]
+    return mean_solve, final[4], final[3] - final[2]
