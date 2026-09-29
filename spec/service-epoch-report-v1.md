@@ -127,3 +127,41 @@ This deliberately omits:
 - consensus influence.
 
 The rule exists only so the end-to-end accounting path can be tested before economics are designed and frozen.
+
+
+## Deterministic evidence root
+
+`evidence_root` commits to the unique evidence keys counted in the epoch.
+
+Before tree construction, evidence keys are sorted lexicographically by their 32-byte value.
+
+Leaf:
+
+```text
+keccak256(
+  "NIAHCIA/SERVICE-EVIDENCE-LEAF/V1"
+  || evidence_key
+)
+```
+
+Internal node:
+
+```text
+keccak256(
+  "NIAHCIA/SERVICE-EVIDENCE-NODE/V1"
+  || left
+  || right
+)
+```
+
+If a tree level has an odd final node, that node is duplicated.
+
+Empty root:
+
+```text
+keccak256(
+  "NIAHCIA/SERVICE-EVIDENCE-EMPTY/V1"
+)
+```
+
+Sorting makes the root independent of local evidence-arrival order while duplicate-replay rejection keeps the committed set unique.
