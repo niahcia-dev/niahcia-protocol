@@ -276,3 +276,8 @@ service_node_id =
 Signature verification MUST reject a report when the supplied public key does not derive the report's `service_node_id`.
 
 This binds authorship to the service identity without granting that identity any consensus privilege.
+
+
+## Locked interoperability vector
+
+The current cross-implementation compatibility vector is `test-vectors/service-epoch-report-v1.json`. Implementations SHOULD reproduce its compressed public key, `service_node_id`, NCE/1 ID preimage, `report_id`, signing preimage, signing digest, compact secp256k1 signature, and final canonical signed bytes exactly.
