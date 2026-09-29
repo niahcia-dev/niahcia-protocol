@@ -96,3 +96,12 @@ Signed chain/reorg observations are defined in `chain-observation-v1.md`.
 Verifiable state snapshots are defined in `snapshot-manifest-v1.md`.
 
 A service-node signature proves authorship of an observation or manifest, not correctness of chain selection.
+
+
+## Identity derivation
+
+The initial service-node identity is derived from a secp256k1 public key using `NIAHCIA/SERVICE-NODE-ID/V1`.
+
+Clients MUST verify that signed service objects are produced by the public key corresponding to the claimed `service_node_id`.
+
+Service-node identity proves authorship only. It does not add chain work, voting power, or fork-choice authority.
