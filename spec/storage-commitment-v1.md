@@ -95,3 +95,8 @@ Verification MUST also confirm that the supplied public key derives the claimed 
 The current reference builder rejects zero `chunk_count`, zero `total_bytes`, an empty `service_class`, and an empty or reversed retention interval.
 
 Manifest totals are still independently checked against the referenced manifest during service verification; merely encoding those counts does not prove they are correct.
+
+
+## Locked interoperability vector
+
+The current compatibility vector is `test-vectors/storage-commitment-v1.json`. Implementations SHOULD reproduce the compressed public key, `service_node_id`, NCE/1 ID preimage, `commitment_id`, signing preimage, signing digest, compact secp256k1 signature, and final canonical signed bytes exactly.
