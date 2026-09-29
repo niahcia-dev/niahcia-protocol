@@ -63,3 +63,15 @@ The NIAHCIA chain database is the authority for:
 - cumulative work,
 - canonical-chain selection,
 - reorganization decisions.
+
+## Service-node observations
+
+Service nodes may retain competing branches, relay headers, serve snapshots, and publish signed chain/reorg observations.
+
+These are support services only.
+
+The chain database MUST NOT use service-node count, signatures, collateral, reputation, or quorum as fork-choice weight.
+
+A valid heavier PoW chain cannot be vetoed by service nodes.
+
+Conversely, service-node agreement cannot make an invalid or lower-work chain canonical.
