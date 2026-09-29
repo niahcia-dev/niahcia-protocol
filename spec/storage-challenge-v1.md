@@ -172,3 +172,8 @@ Signatures use fixed-width compact secp256k1 ECDSA `r[32] || s[32]`.
 Verification MUST independently recompute the challenge seed, challenge ID, network-bound signing digest, challenger identity binding, non-empty requested segment set, non-zero segment lengths, and a deadline strictly later than `issued_at`.
 
 Protocol-derived unsigned challenge scheduling may be specified separately later; it MUST NOT silently overload this signed peer-challenge encoding.
+
+
+## Locked interoperability vector
+
+The current compatibility vector is `test-vectors/storage-challenge-v1.json`. Implementations SHOULD reproduce the challenge seed, challenger identity, NCE/1 ID preimage, `challenge_id`, signing preimage, signing digest, compact secp256k1 signature, and final canonical signed bytes exactly.
