@@ -63,3 +63,12 @@ This repository is the source of truth for the NIAHCIA architecture and protocol
 ## Status
 
 Early architecture and protocol design. Interfaces and parameters are expected to evolve before any production network launch.
+
+## Consensus foundation
+
+The first concrete chain-consensus specifications are now tracked in:
+
+- `spec/block-header-v1.md` — fixed-width NIAHCIA-owned PoW block header
+- `spec/transaction-merkle-v1.md` — NIAHCIA-native transaction Merkle commitment
+
+These specifications deliberately keep Ethereum/Reth block identity outside NIAHCIA consensus.
