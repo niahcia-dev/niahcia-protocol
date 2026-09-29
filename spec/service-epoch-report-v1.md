@@ -189,3 +189,48 @@ The finalized report binds:
 Finalization does not itself pay rewards and does not make the report consensus-authoritative.
 
 The signed/canonical `ServiceEpochReportV1` object may carry the same accounting values plus protocol metadata such as report ID, operator ID, service classes, created block, and signature.
+
+
+## Canonical NCE/1 encoding
+
+`ServiceEpochReportV1` uses object type `0x0208` and schema version `1`.
+
+Payload field IDs are the permanent assignments in `field-id-registry.md`.
+
+`service_classes` is an unordered set of protocol-defined ASCII service identifiers such as `ARCHIVE` and `MODEL_STORAGE`. Before NCE/1 array encoding, each text value is canonically encoded, sorted by raw encoded bytes, and duplicates are removed.
+
+`verified_bytes_served` and `eligibility_weight` are unsigned 64-bit values in v1. This avoids CBOR bignum tags, which NCE/1 forbids.
+
+### Report ID
+
+`report_id` is content-derived. Its preimage excludes fields `2 report_id` and `18 signature`, but retains the normal NCE/1 ServiceEpochReport envelope.
+
+```text
+report_id =
+  keccak256(
+    "NIAHCIA" || 0x00 ||
+    "ID/SERVICE_EPOCH_REPORT" || 0x00 ||
+    network_id || 0x00 ||
+    nce1_report_without_report_id_or_signature
+  )
+```
+
+### Signing digest
+
+The signing preimage includes `report_id` and excludes only field `18 signature`.
+
+```text
+signing_digest =
+  keccak256(
+    "NIAHCIA" || 0x00 ||
+    "SIGN/SERVICE_EPOCH_REPORT" || 0x00 ||
+    network_id || 0x00 ||
+    nce1_report_without_signature
+  )
+```
+
+The signature therefore commits to the report ID, all accounting fields, evidence root, service classes, created block, and network.
+
+### Network replay protection
+
+The same canonical report produces different report/signing digests on different networks because `network_id` is outside and directly bound into the domain-separated digest.
