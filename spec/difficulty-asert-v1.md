@@ -175,3 +175,19 @@ Still required:
 - independent implementation reproduction.
 
 Until these are complete, ASERT remains the leading candidate rather than frozen mainnet law.
+
+## Timestamp-adversary finding
+
+A worst-case simulation in which one miner controls every block after height 99 and always chooses the minimum timestamp permitted by the current median-time-past rule causes header time to lag far behind real solve time.
+
+Because ASERT interprets that lag as the chain running ahead of schedule, the target becomes substantially harder and block intervals lengthen.
+
+Therefore the current combination of ASERT plus the draft timestamp rule MUST NOT be frozen yet.
+
+See:
+
+```text
+docs/difficulty-asert-timestamp-attack.md
+```
+
+The next consensus work must quantify partial-attacker behavior and determine whether an additional deterministic timestamp-hardening rule is needed.
