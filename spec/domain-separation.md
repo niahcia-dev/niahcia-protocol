@@ -84,3 +84,19 @@ CHUNK/STORAGE
 New domains require a protocol specification or NIP.
 
 Implementations MUST reject an unknown domain where verification depends on understanding its semantics.
+
+## Consensus domains
+
+The fixed-width consensus formats use the following full ASCII domain strings directly in their hash preimages:
+
+```text
+NIAHCIA/BLOCK-HEADER/V1
+NIAHCIA/MINING-TEMPLATE/V1
+NIAHCIA/EXECUTION-COMMITMENT/V1
+NIAHCIA/TX/V1
+NIAHCIA/MERKLE-EMPTY/V1
+NIAHCIA/MERKLE-LEAF/V1
+NIAHCIA/MERKLE-NODE/V1
+```
+
+These are consensus constants and are distinct from the generic NCE/1 object-purpose domains above.
