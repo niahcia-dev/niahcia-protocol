@@ -464,3 +464,31 @@ For `StorageChallenge` schema version 1, field `7 requested_ranges` is an array 
 ```
 
 The positions are permanent within schema version 1. They are not map-field IDs and therefore do not consume global field-registry numbers.
+
+
+## StorageResponse range_proofs nested encoding
+
+For `StorageResponse` schema version 1, field `7 range_proofs` is an array of ten-element arrays:
+
+```text
+[
+  chunk_index,
+  segment_index,
+  offset,
+  length,
+  returned_bytes,
+  chunk_length,
+  chunk_hash,
+  range_root,
+  range_proof,
+  manifest_proof
+]
+```
+
+Each `range_proof` and `manifest_proof` is an array of:
+
+```text
+[ sibling_bytes32, sibling_is_left_bool ]
+```
+
+These positions are permanent within schema version 1 and do not consume global field-registry numbers.
