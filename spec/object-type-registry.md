@@ -33,6 +33,15 @@ NCE/1 top-level envelopes include a permanent numeric `object_type`.
 0x0202  JobAcceptance
 0x0203  ResultReveal
 0x0204  VerificationReceipt
+0x0205  StorageCommitment
+0x0206  StorageChallenge
+0x0207  StorageResponse
+0x0208  ServiceEpochReport
+0x0209  RelayReceipt
+0x020A  AvailabilityAttestation
+0x020B  ChainObservation
+0x020C  ReorgObservation
+0x020D  SnapshotManifest
 ```
 
 ## Allocation policy
