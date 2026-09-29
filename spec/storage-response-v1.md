@@ -48,3 +48,6 @@ A verifier MUST check:
 A successful response proves availability for the sampled ranges at the challenge time.
 
 It does not prove that every byte of the committed object was retained locally at every instant.
+
+
+Manifest membership proofs MUST follow `storage-manifest-merkle-v1.md`.
