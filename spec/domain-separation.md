@@ -120,6 +120,7 @@ NIAHCIA/STORAGE-MANIFEST-EMPTY/V1
 NIAHCIA/STORAGE-RANGE-LEAF/V1
 NIAHCIA/STORAGE-RANGE-NODE/V1
 NIAHCIA/STORAGE-RANGE-EMPTY/V1
+NIAHCIA/SERVICE-EVIDENCE/V1
 ```
 
 These are consensus constants and are distinct from the generic NCE/1 object-purpose domains above.
