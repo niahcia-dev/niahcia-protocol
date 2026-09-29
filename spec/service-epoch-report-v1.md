@@ -165,3 +165,27 @@ keccak256(
 ```
 
 Sorting makes the root independent of local evidence-arrival order while duplicate-replay rejection keeps the committed set unique.
+
+
+## Finalization
+
+The reference node may finalize an in-memory epoch accumulator into a deterministic `FinalizedServiceEpochReport` prior to canonical serialization/signing.
+
+The finalized report binds:
+
+- service_node_id,
+- epoch_start_height,
+- epoch_end_height,
+- challenges_passed,
+- challenges_failed,
+- deadlines_missed,
+- verified_bytes_served,
+- distinct_requester_count,
+- distinct_challenge_block_count,
+- evidence_root,
+- eligibility result,
+- eligibility_weight.
+
+Finalization does not itself pay rewards and does not make the report consensus-authoritative.
+
+The signed/canonical `ServiceEpochReportV1` object may carry the same accounting values plus protocol metadata such as report ID, operator ID, service classes, created block, and signature.
