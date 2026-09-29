@@ -96,3 +96,34 @@ The ordered `chunk_lengths` list is part of the manifest commitment.
 This selector intentionally samples both chunk identity and an internal byte range, reducing the usefulness of keeping only small challenge caches.
 
 The initial selector uses modulo reduction. This is acceptable for service-layer sampling because it does not affect PoW consensus or chain validity. A later protocol revision may adopt rejection sampling if stronger statistical uniformity is required.
+
+
+## Segment-aligned selector
+
+The service implementation SHOULD challenge complete intra-chunk Merkle segments rather than arbitrary byte substrings.
+
+Given a fixed `segment_size`, derive for each requested sample:
+
+```text
+selector_digest =
+  keccak256(
+    "NIAHCIA/STORAGE-SELECT/V1"
+    || challenge_seed
+    || counter_u64_be
+  )
+
+chunk_word   = BE_U64(selector_digest[0..8])
+segment_word = BE_U64(selector_digest[8..16])
+
+chunk_index   = chunk_word mod chunk_count
+chunk_length  = manifest.chunk_lengths[chunk_index]
+segment_count = ceil(chunk_length / segment_size)
+segment_index = segment_word mod segment_count
+
+offset = segment_index * segment_size
+length = min(segment_size, chunk_length - offset)
+```
+
+The challenged response then returns the complete selected segment plus its `storage-range-merkle-v1.md` proof.
+
+This segment-aligned selector supersedes arbitrary unaligned byte-range sampling for the proof path that is intended to settle service rewards.
