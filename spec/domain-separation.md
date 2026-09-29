@@ -113,6 +113,7 @@ NIAHCIA/MERKLE-EMPTY/V1
 NIAHCIA/MERKLE-LEAF/V1
 NIAHCIA/MERKLE-NODE/V1
 NIAHCIA/STORAGE-CHALLENGE/V1
+NIAHCIA/STORAGE-SELECT/V1
 ```
 
 These are consensus constants and are distinct from the generic NCE/1 object-purpose domains above.
