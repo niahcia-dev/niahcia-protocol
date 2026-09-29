@@ -149,3 +149,8 @@ The initial reference verifier additionally requires:
 - each `range_root`, `chunk_length`, and `chunk_hash` authenticates to the commitment's manifest root.
 
 Successful verification returns the exact number of bytes authenticated by the challenge.
+
+
+## Locked interoperability vector
+
+The current compatibility vector is `test-vectors/storage-response-v1.json`. Implementations SHOULD reproduce the provider identity, `range_root`, `response_bytes_hash`, NCE/1 ID preimage, `response_id`, signing preimage, signing digest, compact secp256k1 signature, and final canonical signed bytes exactly.
