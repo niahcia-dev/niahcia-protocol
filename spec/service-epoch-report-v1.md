@@ -234,3 +234,26 @@ The signature therefore commits to the report ID, all accounting fields, evidenc
 ### Network replay protection
 
 The same canonical report produces different report/signing digests on different networks because `network_id` is outside and directly bound into the domain-separated digest.
+
+
+## secp256k1 signature encoding
+
+The reference implementation signs the 32-byte `SIGN/SERVICE_EPOCH_REPORT` digest using secp256k1 ECDSA.
+
+The wire signature is the fixed-width 64-byte compact form:
+
+```text
+r[32] || s[32]
+```
+
+DER encoding is not used for `ServiceEpochReportV1`.
+
+Verification MUST:
+
+- recompute and validate `report_id` before signature verification,
+- recompute the network-bound signing digest,
+- parse the service-node public key as SEC1 secp256k1 bytes,
+- require exactly 64 signature bytes,
+- reject signatures that do not verify for the supplied public key.
+
+The public-key-to-`service_node_id` binding is a separate service-identity rule and must be defined before public reward settlement is enabled.
