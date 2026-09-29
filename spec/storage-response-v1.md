@@ -51,3 +51,8 @@ It does not prove that every byte of the committed object was retained locally a
 
 
 Manifest membership proofs MUST follow `storage-manifest-merkle-v1.md`.
+
+
+For sub-chunk challenges, range membership proofs MUST follow `storage-range-merkle-v1.md`.
+
+A response must not claim that an arbitrary byte substring is authenticated by the full chunk hash alone. It must provide the complete challenged Merkle segment or segments plus their range proofs.
