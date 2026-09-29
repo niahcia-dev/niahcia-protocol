@@ -98,3 +98,32 @@ The accumulator SHOULD separately track:
 These raw counters are evidence-accounting inputs only. The final eligibility-weight formula remains unfrozen.
 
 Persistent storage of replay keys across process restart is required before service rewards are enabled on a public network.
+
+
+## Conservative development eligibility rule
+
+The first reference-node eligibility rule is intentionally simple and is **not frozen economics**.
+
+A service node is ineligible for an epoch unless all configured minimums are satisfied:
+
+- minimum successful challenge count,
+- minimum distinct requester count,
+- minimum distinct challenge-block count,
+- successful challenges are not outnumbered by failures,
+- no missed response deadlines.
+
+When eligible, the development weight is:
+
+```text
+max(verified_bytes_served, challenges_passed)
+```
+
+This deliberately omits:
+
+- reputation multipliers,
+- collateral multipliers,
+- operator prestige,
+- uptime self-reporting,
+- consensus influence.
+
+The rule exists only so the end-to-end accounting path can be tested before economics are designed and frozen.
