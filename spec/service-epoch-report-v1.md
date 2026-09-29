@@ -66,3 +66,35 @@ It SHOULD consider:
 - service-class-specific quality metrics.
 
 It MUST NOT include any consensus voting power.
+
+
+## Replay and diversity accounting
+
+An implementation maintaining an epoch report SHOULD keep a set of unique evidence keys.
+
+Initial replay key:
+
+```text
+keccak256(
+  "NIAHCIA/SERVICE-EVIDENCE/V1"
+  || challenge_id
+  || service_node_id
+  || response_hash
+)
+```
+
+The same evidence key MUST NOT be counted twice in one epoch accumulator.
+
+The accumulator SHOULD separately track:
+
+- successful challenges,
+- failed challenges,
+- missed deadlines,
+- total verified bytes served,
+- distinct requester identities,
+- distinct challenge block IDs,
+- total unique evidence records.
+
+These raw counters are evidence-accounting inputs only. The final eligibility-weight formula remains unfrozen.
+
+Persistent storage of replay keys across process restart is required before service rewards are enabled on a public network.
