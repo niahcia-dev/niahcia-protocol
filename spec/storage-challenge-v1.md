@@ -23,13 +23,13 @@ StorageChallengeV1
 - signature
 ```
 
-Each requested range contains:
+For the segment-aligned proof path, each requested range is canonically encoded as the four-element NCE/1 array:
 
 ```text
-chunk_index
-offset
-length
+[ chunk_index, segment_index, offset, length ]
 ```
+
+All four values are unsigned integers. `length` MUST be non-zero. The array form is intentional: positions are permanent for `StorageChallengeV1` schema version 1 and avoid introducing unregistered nested map keys.
 
 ## Seed derivation
 
@@ -127,3 +127,48 @@ length = min(segment_size, chunk_length - offset)
 The challenged response then returns the complete selected segment plus its `storage-range-merkle-v1.md` proof.
 
 This segment-aligned selector supersedes arbitrary unaligned byte-range sampling for the proof path that is intended to settle service rewards.
+
+
+## Canonical NCE/1 encoding
+
+`StorageChallengeV1` uses object type `0x0206` and schema version `1`.
+
+The reference implementation uses the segment-aligned `requested_ranges` representation described above.
+
+The builder derives `challenge_seed` directly from `challenge_block_id` and `commitment_id`; callers do not supply an arbitrary seed.
+
+### Challenge ID
+
+The ID preimage excludes fields `2 challenge_id` and `11 signature`.
+
+```text
+challenge_id =
+  keccak256(
+    "NIAHCIA" || 0x00 ||
+    "ID/STORAGE_CHALLENGE" || 0x00 ||
+    network_id || 0x00 ||
+    nce1_challenge_without_challenge_id_or_signature
+  )
+```
+
+### Signing digest
+
+The signing preimage includes `challenge_id` and excludes only field `11 signature`.
+
+```text
+signing_digest =
+  keccak256(
+    "NIAHCIA" || 0x00 ||
+    "SIGN/STORAGE_CHALLENGE" || 0x00 ||
+    network_id || 0x00 ||
+    nce1_challenge_without_signature
+  )
+```
+
+The initial signed challenge path treats `challenger_id` as a service identity derived from the challenger's compressed secp256k1 public key via `NIAHCIA/SERVICE-NODE-ID/V1`.
+
+Signatures use fixed-width compact secp256k1 ECDSA `r[32] || s[32]`.
+
+Verification MUST independently recompute the challenge seed, challenge ID, network-bound signing digest, challenger identity binding, non-empty requested segment set, non-zero segment lengths, and a deadline strictly later than `issued_at`.
+
+Protocol-derived unsigned challenge scheduling may be specified separately later; it MUST NOT silently overload this signed peer-challenge encoding.
