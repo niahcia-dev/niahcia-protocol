@@ -50,3 +50,48 @@ commitment_id =
 A StorageCommitmentV1 creates eligibility to prove service.
 
 It does not by itself create a reward entitlement.
+
+
+## Canonical NCE/1 encoding
+
+`StorageCommitmentV1` uses object type `0x0205` and schema version `1`. Payload field IDs are the permanent assignments in `field-id-registry.md`.
+
+`chunk_count`, `total_bytes`, retention heights, and `commitment_nonce` are unsigned 64-bit values in v1.
+
+### Commitment ID
+
+The ID preimage excludes both field `2 commitment_id` and field `14 signature`, while retaining the normal NCE/1 envelope.
+
+```text
+commitment_id =
+  keccak256(
+    "NIAHCIA" || 0x00 ||
+    "ID/STORAGE_COMMITMENT" || 0x00 ||
+    network_id || 0x00 ||
+    nce1_commitment_without_commitment_id_or_signature
+  )
+```
+
+### Signing digest
+
+The signing preimage includes `commitment_id` and excludes only field `14 signature`.
+
+```text
+signing_digest =
+  keccak256(
+    "NIAHCIA" || 0x00 ||
+    "SIGN/STORAGE_COMMITMENT" || 0x00 ||
+    network_id || 0x00 ||
+    nce1_commitment_without_signature
+  )
+```
+
+The reference implementation signs this 32-byte digest with secp256k1 ECDSA and stores the signature as fixed-width compact `r[32] || s[32]`.
+
+Verification MUST also confirm that the supplied public key derives the claimed `service_node_id` using `NIAHCIA/SERVICE-NODE-ID/V1`.
+
+### Builder validation
+
+The current reference builder rejects zero `chunk_count`, zero `total_bytes`, an empty `service_class`, and an empty or reversed retention interval.
+
+Manifest totals are still independently checked against the referenced manifest during service verification; merely encoding those counts does not prove they are correct.
