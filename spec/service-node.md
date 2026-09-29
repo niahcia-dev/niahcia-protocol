@@ -34,11 +34,15 @@ Initial/future vocabulary:
 ```text
 MODEL_STORAGE
 MEMORY_STORAGE
+AGENT_STORAGE
 ARTIFACT_STORAGE
 DATASET_STORAGE
 ROUTING
+RELAY
 INDEXING
 ARCHIVE
+SNAPSHOT
+REORG_WATCH
 VERIFICATION
 ```
 
@@ -78,3 +82,17 @@ EXITED
 ## Prototype 0
 
 Prototype 0 enables MODEL_STORAGE, model manifest/chunk serving, basic availability tracking, and test retrieval accounting.
+
+## Security support boundary
+
+Service nodes may strengthen availability, archival durability, relay diversity, anti-eclipse observation, snapshot distribution, and reorg forensics.
+
+They do not gain consensus authority from those services.
+
+The detailed security profile is defined in `service-node-security-v1.md`.
+
+Signed chain/reorg observations are defined in `chain-observation-v1.md`.
+
+Verifiable state snapshots are defined in `snapshot-manifest-v1.md`.
+
+A service-node signature proves authorship of an observation or manifest, not correctness of chain selection.
