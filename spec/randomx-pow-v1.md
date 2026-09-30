@@ -137,3 +137,10 @@ Before public testnet, vectors MUST cover:
 - at least one known valid RandomX header/hash pair
 - at least one known invalid RandomX header/hash pair
 - block-work calculation
+
+
+## Locked interoperability vector
+
+The current RandomX conformance fixture is `test-vectors/randomx-pow-v1.json`.
+
+It fixes a 32-byte seed, an exact 164-byte `BlockHeaderV1`, the expected RandomX output, and valid/invalid target comparisons. Seed derivation remains independently testable through the `NIAHCIA/RANDOMX-SEED/V1` domain rule above.
