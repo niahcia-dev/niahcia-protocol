@@ -1,0 +1,89 @@
+# NIAHCIA Address V1
+
+Status: **LOCKED for V1 interoperability**
+
+NIAHCIA Address V1 is the canonical human-readable address container used by nodes, wallets, miners, explorers, SDKs, and other implementations.
+
+## Encoding
+
+Address V1 uses **Bech32m**. The decoded payload is exactly 22 bytes:
+
+```text
+offset  size  field
+0       1     version
+1       1     kind
+2       20    payload
+```
+
+V1 version is `0x01`.
+
+Kinds:
+
+```text
+0x00 Account
+0x01 Contract
+```
+
+No other V1 kind is valid.
+
+## Network HRPs
+
+```text
+mainnet  niah   niah1...
+testnet  tniah  tniah1...
+devnet   dniah  dniah1...
+```
+
+When the expected network is known, an address from another network is invalid.
+
+## Account payload derivation
+
+For a V1 Account, hash the account public-key bytes with Keccak-256 and take the final 20 bytes. The native container encodes:
+
+```text
+0x01 || 0x00 || account_payload_20
+```
+
+using Bech32m and the network HRP.
+
+## Contract addresses
+
+A V1 Contract encodes:
+
+```text
+0x01 || 0x01 || contract_payload_20
+```
+
+using Bech32m and the network HRP.
+
+Deterministic derivation of `contract_payload_20` belongs to the contract-creation protocol. This container specification does not invent that derivation.
+
+## Validation
+
+A V1 decoder rejects:
+
+1. invalid Bech32m checksum;
+2. unknown NIAHCIA HRP;
+3. decoded payload not exactly 22 bytes;
+4. version other than `0x01`;
+5. undefined V1 kind;
+6. network mismatch where a network is required;
+7. kind mismatch where a kind is required.
+
+Malformed native addresses must not be silently reinterpreted as hexadecimal or another network's address.
+
+## Execution boundary
+
+The 20-byte payload permits an internal execution-layer address mapping. That mapping does not replace the native NIAHCIA string as the canonical user-facing representation.
+
+A native mining fee recipient is an Account address for the selected network. The node may decode its 20-byte payload for the Reth Engine API internally.
+
+Legacy hexadecimal configuration is an implementation migration facility and is not part of the canonical native Address V1 representation.
+
+## Interoperability vectors
+
+The reference implementation currently carries byte-for-byte vectors for all six network/kind combinations. The protocol vector suite should mirror these fixtures so independent implementations do not need to treat Rust source code as the long-term vector authority.
+
+## Compatibility rule
+
+An already-defined V1 address must never be reinterpreted. Changes to payload length, kind semantics, derivation semantics, checksum/encoding, or network meaning require a new version or explicitly versioned transition.
