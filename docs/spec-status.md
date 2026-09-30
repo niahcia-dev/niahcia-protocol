@@ -27,6 +27,25 @@ Status vocabulary:
 | Fork choice | difficulty/architecture docs | CANDIDATE architecture | Greatest valid cumulative work is consistently specified | Direction is stable, but exact work arithmetic remains consensus-critical and should remain tied to vectors/implementation tests. |
 | Network parameters | `spec/network-parameters-v1.md` | CANDIDATE framework | Devnet values exist in development implementation | Framework is sound; production genesis, pow limit, seed/epoch parameters, activation heights and concrete network definitions remain to be frozen. |
 
+## Monetary/value/fee audit
+
+| Area | Protocol document | Protocol status | Implementation/vector evidence | Audit finding |
+| --- | --- | --- | --- | --- |
+| Native denomination | `spec/monetary-and-fee-primitives-v1.md` | **LOCKED** | Reference implementation documentation already records the same rule | Exactly 8 decimals: `1 NIAH = 100,000,000 aniah`. This is representation, not supply policy. |
+| Native monetary scalar | same | **LOCKED** | Native transaction design uses `u128` monetary quantities | Canonical `u128` monetary fields are unsigned 16-byte big-endian values; checked arithmetic only. |
+| Native network IDs | same | **LOCKED** | Reference implementation documentation matches | `0x00` mainnet, `0x01` testnet, `0x02` devnet in the native signed transaction domain. |
+| Native chain IDs | same | **LOCKED** | Reference implementation documentation matches | Mainnet `0x000000004E494148`; testnet `0x0000000154494148`; devnet `0x0000000244494148`. EVM chain ID remains a separate execution-domain identifier. |
+| Fee reserve/charge arithmetic | same | **LOCKED** | Reference implementation documentation defines identical checked equations | Maximum reserve, balance requirement, charged fee and unused reserve use deterministic checked integer arithmetic. |
+| RPC monetary representation | same | LOCKED semantic / SHOULD encoding | Reference docs use decimal-string examples | Native monetary integers should use decimal strings in JSON RPC to avoid precision loss. |
+| CPU-PoW emission | separate economic policy | CANDIDATE / IMPLEMENTED (DEV) | `crates/node/src/monetary.rs` implements the selected pre-production candidate and exact tests | Do **not** confuse the implemented 10 NIAH / shift-22 / 0.25 NIAH tail candidate with the locked 8-decimal representation. Activation remains gated. |
+| Fee disposition | separate economic policy | CANDIDATE / OPEN | Fee primitive reserves and charges are defined | Burn/producer/treasury treatment is not inherited silently from Reth/Ethereum and must be explicitly specified. |
+
+### Monetary synchronization finding
+
+The locked monetary/fee primitives previously existed only as implementation-facing documentation in `niahcia/docs/monetary-and-fee-primitives-v1.md`. They are now synchronized into the authoritative protocol repository as `spec/monetary-and-fee-primitives-v1.md`.
+
+The reference implementation's current CPU-PoW emission code is intentionally classified separately: it is a pre-production policy candidate with deterministic tests, not a consequence of the eight-decimal denomination lock.
+
 ## Immediate consensus blockers before freeze
 
 1. Resolve the stock-XMRig mining-preimage/nonce-layout question without modifying RandomX itself.
@@ -45,4 +64,4 @@ For every protocol-affecting code change:
 4. update the corresponding implementation-facing documentation in `niahcia/niahcia`;
 5. explicitly identify superseded behavior.
 
-The audit will be expanded through value/fees, addresses/chain identity, transactions/serialization, service/storage, compute/jobs/verification, and agents/capabilities.
+The audit will continue through addresses, transactions/serialization, service/storage, compute/jobs/verification, and agents/capabilities.
