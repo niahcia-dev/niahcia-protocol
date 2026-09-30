@@ -53,3 +53,5 @@ These are protocol-development vectors, not mainnet data. Changing a Draft schem
 - `storage-challenge-v1.json` — locked NCE/1, challenge-seed, challenge-ID, signing-digest, and secp256k1 signature vector for `StorageChallengeV1`.
 
 - `storage-response-v1.json` — locked NCE/1, response-bytes hash, response-ID, signing-digest, and secp256k1 signature vector for `StorageResponseV1`.
+
+- `randomx-pow-v1.json` — locked fixed-seed, exact-164-byte-header RandomX output and target-comparison vector.
