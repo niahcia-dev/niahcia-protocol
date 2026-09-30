@@ -1,5 +1,9 @@
 # VerificationPolicy
 
+## Status
+
+**CANDIDATE — policy framework retained; the former fixed Prototype-0 2-of-3 scheme is SUPERSEDED.**
+
 ## Purpose
 
 `VerificationPolicy` defines how execution correctness is evaluated without baking one verification mechanism into the protocol.
@@ -38,49 +42,54 @@ CUSTOM
 
 ## REDUNDANT
 
-Multiple independent executions are compared using canonical result commitments.
+Multiple independent executions may be compared using canonical result commitments. `executor_count` and `agreement_threshold` are policy parameters, not global constants.
 
-Example Prototype 0:
-
-```text
-executor_count = 3
-agreement_threshold = 2
-operator_diversity = required
-```
+A redundant policy that claims independent verification must account for operator diversity and should account for correlated implementation/hardware/model/runtime failure where applicable.
 
 ## OPTIMISTIC
 
-One primary execution is accepted after a challenge window unless challenged.
+One primary execution may be accepted after a challenge window unless challenged, subject to the policy's evidence, bond, audit, and dispute rules.
 
 ## AUDITED
 
-Execution is subject to mandatory or probabilistic independent audits.
+Execution is subject to mandatory or probabilistic independent audits according to the policy.
 
 ## TEE / ZK_PROOF
 
-These policy types reserve standardized proof/attestation-driven verification mechanisms. Exact proof systems are defined separately.
+These policy types reserve standardized proof/attestation-driven verification mechanisms. Exact proof systems require separate versioned specifications.
 
 ## Disagreement
 
 A disagreement does not automatically imply fraud.
 
-Policies MUST distinguish:
+Policies must distinguish:
 
-- timeout/unavailability
-- non-reproducible honest mismatch
-- malformed commitment
-- cryptographically provable protocol violation
-- adjudicated dishonest execution
+- timeout/unavailability;
+- non-reproducible honest mismatch;
+- malformed commitment;
+- cryptographically provable protocol violation;
+- adjudicated dishonest execution.
 
-Penalty policy MUST be explicit.
+Penalty policy must be explicit.
 
 ## Invariants
 
-1. The policy is immutable once used by a Job.
-2. Verification mechanism changes do not require PoW consensus changes.
-3. Independent verification SHOULD enforce operator diversity where the policy claims independence.
-4. Result comparison MUST use canonical serialized commitments.
+1. A policy referenced by an accepted Job is immutable for that Job.
+2. Verification-mechanism evolution does not grant verifiers PoW consensus authority.
+3. Independent verification must enforce the diversity properties the policy claims.
+4. Result comparison uses canonical serialized commitments.
+5. A fixed network-wide `2-of-3` verifier assumption is not part of Protocol V1.
+6. Verification and scheduling must not depend on a permanent trusted coordinator.
 
-## Prototype 0
+## Prototype status
 
-Prototype 0 uses REDUNDANT 2-of-3 agreement with commit-before-reveal and no automatic slashing for ordinary mismatch.
+The earlier Prototype-0 rule:
+
+```text
+executor_count = 3
+agreement_threshold = 2
+```
+
+is **SUPERSEDED** and must not be treated as the current NIAHCIA verification design.
+
+The replacement verification design remains a candidate and must be specified with explicit eligibility, selection, evidence, diversity, timeout, challenge, dispute, and settlement rules before it is locked. Until then, implementations may use development-only policies for testing but must label them as such.
