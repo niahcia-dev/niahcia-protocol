@@ -1,5 +1,9 @@
 # Job
 
+## Status
+
+**CANDIDATE Protocol V1 object.**
+
 ## Purpose
 
 `Job` is the generic unit of requested work.
@@ -79,22 +83,24 @@ EXPIRED
 CANCELLED
 ```
 
-Implementations MAY track more internal states for assignment, commit/reveal, auditing, or retries.
+Implementations may track more internal states for eligibility, assignment, commitment, auditing, challenge, retries, or settlement.
 
 ## Fast response rule
 
 The job may reach `RESPONDED` before `SETTLED`.
 
-Streaming output is a P2P data-plane operation. Blockchain settlement is asynchronous.
+Streaming output is an AI P2P data-plane operation. Blockchain settlement is asynchronous.
 
 ## Invariants
 
-1. Large inputs/outputs MUST NOT be required on-chain.
-2. The job MUST commit to exact input and execution requirements.
-3. The accepted result MUST be bound to this `job_id`.
+1. Large inputs/outputs must not be required on-chain.
+2. The job must commit to exact input and execution requirements.
+3. The accepted result must be bound to this `job_id`.
 4. Payment and verification semantics are explicit through referenced policy objects.
-5. Job deadlines are expressed in deterministic chain terms where on-chain enforcement is required.
+5. Job deadlines use deterministic chain terms where on-chain enforcement is required.
+6. Scheduling/worker selection must not require a permanent trusted coordinator.
+7. The Job schema does not assume a fixed verifier count or a network-wide 2-of-3 verification rule.
 
-## Prototype 0
+## Prototype status
 
-Prototype 0 supports TEXT_INFERENCE with a pinned Agent/Model/ExecutionProfile and redundant verification.
+Prototype work may initially support `TEXT_INFERENCE` with pinned Agent/Model/ExecutionProfile objects, but the former fixed redundant 2-of-3 verification assumption is superseded. Development verification behavior must reference an explicit development `VerificationPolicy` until the replacement V1 verification design is locked.
