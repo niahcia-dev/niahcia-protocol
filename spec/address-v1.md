@@ -38,13 +38,25 @@ When the expected network is known, an address from another network is invalid.
 
 ## Account payload derivation
 
-For a V1 Account, hash the account public-key bytes with Keccak-256 and take the final 20 bytes. The native container encodes:
+For a V1 Account, the secp256k1 public key MUST first be represented as the
+65-byte uncompressed SEC1 encoding `0x04 || X || Y`.
 
-```text
-0x01 || 0x00 || account_payload_20
-```
+The `0x04` SEC1 prefix MUST NOT be included in the hash input. The account
+payload is derived as:
+
+    digest = Keccak-256(X || Y)
+    account_payload_20 = digest[12..32]
+
+`X || Y` is exactly the 64-byte concatenation of the secp256k1 coordinates.
+
+The native address container encodes:
+
+    0x01 || 0x00 || account_payload_20
 
 using Bech32m and the network HRP.
+
+Compressed SEC1 public-key encoding is not a valid input to the Address V1
+account-derivation procedure.
 
 ## Contract addresses
 
