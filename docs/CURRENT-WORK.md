@@ -41,15 +41,33 @@ Central rules:
 - **baseline operation lives decentralized in the network rent-free to the Primary Agent**;
 - rent-free does **not** mean providers work for free or that unlimited resources are available;
 - expensive user workloads outside the bounded public-service allocation are funded normally;
-- the Primary Agent may learn from eligible network knowledge/results only through provenance, permission, verification/evidence, confidence, and admission-policy boundaries;
-- private user/Agent memory is not automatically learning/training material;
 - Primary Agent status grants zero special PoW/finality/validation/consensus authority.
 
 The intended production Agent must not depend on one human holding one unrestricted master key. Its stable protocol identity, authority, encrypted state, checkpoints, storage, workflows, and learning/provenance should survive host/model/frontend/provider changes.
 
-Open Primary Agent work includes permanent identity establishment, decentralized KeyAuthority/governance, `PrimaryAgentServicePolicy`, rent-free resource accounting and abuse limits, provider compensation source, durable knowledge/provenance objects, learning admission/privacy policy, upgrade governance, recovery/succession, stronger public-agent storage durability, frontend resolution, and canonical vectors.
+## Primary Agent knowledge / self-learning
 
-`docs/why-niahcia.md` now treats this as a core NIAHCIA objective rather than a later application feature.
+`spec/primary-agent-knowledge-v1.md` now defines the candidate knowledge architecture.
+
+Central rules:
+
+- **knowledge is an evidence-bearing claim, not an unqualified fact**;
+- the Primary Agent learns only from permitted evidence, not every Agent's memory;
+- durable knowledge retains provenance;
+- private/session/restricted material does not become shared knowledge merely because the Primary Agent processed it;
+- repeated claims from many identities are not automatically independent evidence or proof;
+- contradictions may coexist while unresolved;
+- newer evidence may supersede older claims without erasing history;
+- knowledge admission is separate from model-weight training/fine-tuning;
+- high-impact autonomous actions may require stronger evidence than ordinary conversational use.
+
+Candidate `PrimaryKnowledgeClaimV1` commits subject/predicate/value, provenance/evidence, permission, confidence/verification status, time, supersession/dispute links, expiry, and admission policy.
+
+Poisoning defenses explicitly assume malicious/compromised/mistaken Agents and include provenance, evidence diversity, source correlation, deduplication, bounded influence, quarantine, domain-specific verification, and auditability. Different signed identities do not automatically constitute independent evidence.
+
+This allows the Primary Agent to improve through retrieval, routing, specialist discovery, execution history, and verified durable knowledge before autonomous model training exists.
+
+Open knowledge work: canonical field IDs, provenance/evidence objects, permission semantics, conflict/supersession rules, content/evidence identity, source/operator correlation, admission-policy object, retention/deletion semantics, vectors, and adversarial poisoning fixtures.
 
 ## Cryptographic authority candidates
 
@@ -115,10 +133,11 @@ At this handoff, GitHub work associated with **#266** was red/failing. Avoid ris
 4. Cross-check NCE/1 IDs/domains/signature preimages/storage vectors.
 5. Review candidate protocol objects without activating them in implementation.
 6. Allocate canonical IDs/fields/domains and vectors before implementation activation.
-7. Continue adversarial review of authority, recovery, migration, checkpoint rollback, duplicate execution, side-effect replay, workflow compensation, budget abuse, and Primary Agent public-service abuse.
+7. Continue adversarial review of authority, recovery, migration, checkpoint rollback, duplicate execution, side-effect replay, workflow compensation, budget abuse, Primary Agent public-service abuse, and knowledge poisoning.
 8. Define deterministic effect receipts/reconciliation evidence.
-9. Define Primary Agent knowledge/provenance and public-service allocation candidates without locking economics prematurely.
-10. Keep both repositories' docs synchronized.
+9. Define `PrimaryAgentServicePolicy` candidate: bounded rent-free baseline resources, provider accounting/compensation boundary, anti-abuse/fairness, without prematurely locking emission percentages.
+10. Define canonical Primary Agent knowledge provenance/evidence objects and poisoning fixtures.
+11. Keep implementation/protocol/compute documentation synchronized.
 
 Deliberate consensus review still needed for RandomX stock miner/pool interoperability, public-testnet RandomX epoch/seed parameters, remaining monetary constants, genesis/network parameters, and chain-ID finalization.
 
@@ -126,8 +145,9 @@ Deliberate consensus review still needed for RandomX stock miner/pool interopera
 
 - `niahcia/niahcia` — implementation behavior/tests/docs.
 - `niahcia/niahcia-protocol` — implementation-independent architecture, formats, interoperability rules, security boundaries, research, vectors.
+- `niahcia/niahcia-compute` — replaceable GPU/accelerator execution-host behavior and operational documentation.
 
-Protocol-visible implementation changes update both.
+Protocol-visible implementation changes update the applicable sources.
 
 ## Development doctrine
 
@@ -135,7 +155,7 @@ Prefer small, testable milestones. Before public devnet/testnet prioritize deter
 
 ## New-session behavior
 
-If asked simply to continue: check GitHub status/#266, read spec status, compare implementation to relevant specs, choose highest-priority safe unresolved work, test if appropriate, update both doc sources, and refresh this handoff. If CI remains blocked, continue safe specification/vector/threat-model work rather than unrelated consensus changes.
+If asked simply to continue: check GitHub status/#266, read spec status, compare implementation to relevant specs, choose highest-priority safe unresolved work, test if appropriate, update applicable docs, and refresh this handoff. If CI remains blocked, continue safe specification/vector/threat-model work rather than unrelated consensus changes.
 
 ## Quick references
 
@@ -144,6 +164,7 @@ If asked simply to continue: check GitHub status/#266, read spec status, compare
 - `docs/why-niahcia.md`
 - `docs/threat-model.md`
 - `spec/primary-agent-v1.md`
+- `spec/primary-agent-knowledge-v1.md`
 - `spec/key-authority-v1.md`
 - `spec/key-rotation-v1.md`
 - `spec/recovery-policy-v1.md`
