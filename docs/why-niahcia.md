@@ -67,9 +67,9 @@ Use of the Primary Agent remains optional. Users and Agents may address other Ag
 
 ### A protocol public good
 
-The Primary Agent's protected baseline operation is intended to live decentralized in the network **rent-free to the Agent**.
+The Primary Agent's protected baseline operation is intended to be supported by the decentralized network through a bounded public-service allocation.
 
-This does not mean infrastructure providers receive nothing or that the Agent has infinite free resources. Rather, a bounded public-service allocation should support baseline conversational inference, replicated checkpoints/state, storage, knowledge/provenance processing, routing, recovery, and availability while providers are compensated through protocol-defined economics.
+This does not mean infrastructure providers receive nothing or that the Agent has infinite resources. The allocation should support baseline conversational inference, replicated checkpoints/state, storage, knowledge/provenance processing, routing, recovery, and availability while providers are compensated through protocol-defined economics.
 
 Large user-requested workloads outside the public-service allocation can still be paid by the requesting user/job/treasury.
 
@@ -169,7 +169,7 @@ No subsystem should secretly become the network's control plane.
 
 CPU miners provide chain security. Compute workers provide AI execution. Storage/service nodes provide measurable service. Verifiers provide policy-defined verification. Agents/users purchase non-public-service resources.
 
-The Primary Agent adds one special economic category: a bounded protocol public-service allocation for its baseline decentralized operation. This allocation does not grant consensus privilege and must not become an unlimited free-compute faucet.
+The Primary Agent adds one special economic category: a bounded protocol public-service allocation for its baseline decentralized operation. This allocation does not grant consensus privilege and must not become an unlimited public-compute resource.
 
 Exact funding/reward mechanics remain open and require explicit economic/security design.
 
@@ -202,7 +202,7 @@ NIAHCIA is not intended to be:
 - a system where an inference host automatically owns the Agent;
 - a centralized chatbot whose failure stops the network;
 - a Primary Agent with consensus authority;
-- an unlimited free-compute faucet disguised as a public Agent.
+- an unlimited public compute service without policy/accounting boundaries.
 
 ## What success would look like
 
@@ -210,7 +210,7 @@ An ordinary user opens any compatible NIAHCIA interface and talks to the same pe
 
 The Primary Agent can resolve its distributed authorized state, use its bounded network-supported baseline resources, discover specialists, delegate work, select eligible compute, obtain verification/evidence, maintain provenance-aware durable knowledge, and return a coherent answer.
 
-For expensive work, it can orchestrate a funded Job rather than abusing its public-service allocation.
+For expensive work, it can orchestrate a funded Job rather than exceeding its public-service allocation.
 
 Meanwhile CPU miners secure the chain independently; storage providers preserve/repair resources independently; specialist Agents remain directly addressable; compute hosts remain replaceable; and the Primary Agent can migrate between hosts without changing identity.
 
@@ -218,7 +218,7 @@ That composition—not any single AI model—is the core NIAHCIA idea.
 
 ## Current reality
 
-NIAHCIA is pre-alpha. `PrimaryAgentV1` is a candidate architecture, not an implemented production service. Its permanent identity, ownerless authority/governance, rent-free resource allocation, provider compensation, abuse resistance, knowledge/provenance system, and upgrade policy remain design/implementation work.
+NIAHCIA is pre-alpha. `PrimaryAgentV1` is a candidate architecture, not an implemented production service. Its permanent identity, ownerless authority/governance, network-supported resource allocation, provider compensation, abuse resistance, knowledge/provenance system, and upgrade policy remain design/implementation work.
 
 NIAHCIA's present differentiation is therefore an architectural direction being implemented and tested, not a claim of production superiority over existing decentralized AI networks.
 
