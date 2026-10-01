@@ -38,8 +38,9 @@ Central rules:
 - **central to user experience, never central to consensus**;
 - **ownerless in the intended production model**;
 - **use is optional** — direct user-to-Agent and Agent-to-Agent interaction remains possible;
-- **baseline operation lives decentralized in the network rent-free to the Primary Agent**;
-- rent-free does **not** mean providers work for free or that unlimited resources are available;
+- **baseline operation is network-supported under a bounded public-service allocation**;
+- providers may still be compensated for eligible public-service resources;
+- the allocation does **not** imply unlimited compute/storage;
 - expensive user workloads outside the bounded public-service allocation are funded normally;
 - Primary Agent status grants zero special PoW/finality/validation/consensus authority.
 
@@ -135,7 +136,7 @@ At this handoff, GitHub work associated with **#266** was red/failing. Avoid ris
 6. Allocate canonical IDs/fields/domains and vectors before implementation activation.
 7. Continue adversarial review of authority, recovery, migration, checkpoint rollback, duplicate execution, side-effect replay, workflow compensation, budget abuse, Primary Agent public-service abuse, and knowledge poisoning.
 8. Define deterministic effect receipts/reconciliation evidence.
-9. Define `PrimaryAgentServicePolicy` candidate: bounded rent-free baseline resources, provider accounting/compensation boundary, anti-abuse/fairness, without prematurely locking emission percentages.
+9. Define `PrimaryAgentServicePolicy` candidate: bounded network-supported baseline resources, provider accounting/compensation boundary, anti-abuse/fairness, without prematurely locking emission percentages.
 10. Define canonical Primary Agent knowledge provenance/evidence objects and poisoning fixtures.
 11. Keep implementation/protocol/compute documentation synchronized.
 
