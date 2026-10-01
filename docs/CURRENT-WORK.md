@@ -25,57 +25,51 @@
 
 ## Non-negotiable boundaries
 
-- CPU PoW alone determines canonical chain by cumulative valid work.
-- Service/storage nodes do not vote on canonical chain.
-- Execution hosts are replaceable and do not automatically own/control Agents.
-- Fixed universal Prototype-0 2-of-3 verification is superseded by policy-driven verification.
-- Storage may preserve ciphertext without decryption/governance/treasury/succession authority.
-- Distinct storage provider keys do not prove independent durability.
-- NCE/1 deterministic CBOR is the canonical serialization foundation.
+CPU PoW alone determines canonical chain by cumulative valid work. Service/storage nodes do not vote on canonical chain. Execution hosts are replaceable and do not automatically own/control Agents. Fixed Prototype-0 universal 2-of-3 verification is superseded by policy-driven verification. Storage may preserve ciphertext without decryption/governance/treasury/succession authority. Distinct provider keys do not prove independent durability. NCE/1 deterministic CBOR is canonical serialization foundation.
 
 ## Cryptographic authority candidates
 
-`KeyAuthorityV1`: durable NIAHCIA identity/address is distinct from one eternal key; separates signing/control, encryption, delegated/session authority, and recovery. Bulk private state uses random DEKs rather than direct wallet-key encryption. Long-term signing keys should be isolated from AI runtimes.
+`KeyAuthorityV1`: durable NIAHCIA identity/address differs from one eternal key; separates signing/control, encryption, delegated/session authority, and recovery. Bulk private state uses random DEKs. Long-term signing keys should be isolated from AI runtimes.
 
 `KeyRotationV1`: same durable subject moves between authority epochs; stale/competing rotations require deterministic rejection.
 
 `RecoveryPolicyV1`: opt-in recovery; candidate NONE/DESIGNATED/THRESHOLD/CONTRACT/DELAYED classes. No NIAHCIA master recovery key. Control recovery and historical memory decryption are separate.
 
-## Secure portable execution
+## Portable execution and continuity
 
-### AgentHostMigrationV1
+`AgentHostMigrationV1`: **execution is portable; authority is not handed to the execution host.** Destination receives bounded session capability and authorized memory scope, not master signing/treasury/recovery/succession authority. Migration can continue without a dead old host when durable state survives.
 
-`spec/agent-host-migration-v1.md`: **execution is portable; authority is not handed to the execution host.** Destination receives bounded session capability and authorized memory scope, never automatic master signing/treasury/recovery/succession authority.
+`AgentCheckpointV1`: **Agent state can be checkpointed; external reality cannot be rolled back with it.** Checkpoints bind Agent/version/manifest/authority epoch, lineage, memory/private-state roots, pending/completed effects, and active jobs. Local uncommitted process state is not durable Agent truth.
 
-Migration should work without cooperation from a dead old host when durable committed state survives. Ordinary hosts may see plaintext intentionally delivered to them; migration/encryption-at-rest is not private inference.
+`SideEffectIntentV1`: **retry the intent, not a newly invented action.** Same logical retry retains the same effect ID. `UNKNOWN` is first-class; timeout/lost acknowledgement does not prove failure. Target-native idempotency is used where available. NIAHCIA does not claim universal exactly-once behavior for external systems that cannot provide it.
 
-### AgentCheckpointV1
+## Multi-step autonomous work
 
-`spec/agent-checkpoint-v1.md` now defines the candidate durable resume boundary.
+### AgentWorkflowV1
 
-Central rule:
-
-> Agent state can be checkpointed; external reality cannot be rolled back with it.
-
-Checkpoints bind exact Agent, AgentVersion/Manifest, KeyAuthority epoch, parent checkpoint, monotonic sequence, memory/private-state roots, pending/completed effects, and active-job state. Checkpoints form a lineage and must not permit silent rollback.
-
-A checkpoint is a state commitment, **not** proof that every external side effect occurred exactly once. Local uncommitted process state is not durable Agent truth.
-
-Concurrent hosts can produce competing checkpoint children. Until branch/merge/current-state semantics are locked, those are conflicts requiring reconciliation rather than silent state merging.
-
-### SideEffectIntentV1
-
-`spec/side-effect-intent-v1.md` defines stable identity for payments, transactions, messages, storage mutations, tool/API calls, purchases, and agent-to-agent economic effects.
+`spec/agent-workflow-v1.md` now defines the candidate durable multi-step orchestration model.
 
 Central rule:
 
-> Retry the intent, not a newly invented action.
+> A workflow is a durable state machine, not a distributed database transaction.
 
-The same logical retry retains the same `effect_id`. A genuinely new action gets a new effect identity. `UNKNOWN` is a first-class operational state: timeout/lost acknowledgement does not prove failure.
+A workflow may coordinate compute, payments, contracts, storage, messages, APIs/tools, purchases, and agent-to-agent actions. Arbitrary external systems are never assumed to share one atomic commit/rollback boundary.
 
-Where a target supports idempotency keys, `effect_id` should be used/mapped to them. Where it does not, NIAHCIA must not claim universal exactly-once execution; adapters reconcile target state before retrying.
+Each externally visible step uses `SideEffectIntentV1` where applicable. A step that times out enters `UNKNOWN`; reconciliation happens before retry. If safety cannot be established, the workflow may remain unknown or enter `MANUAL_REVIEW` rather than guessing.
 
-A crash after submission but before checkpoint is a critical ambiguity case. Resume logic reconciles the existing effect before issuing another action. Checkpoint rollback never authorizes replay of a finalized external effect.
+### Compensation is not rollback
+
+If a completed step must be undone economically/operationally, compensation is a **new forward action** with its own effect identity, authority, budget, receipt, and failure state. Examples include refunding a payment, cancelling a reservation where possible, revoking a capability, or issuing a corrective action.
+
+Some actions are irreversible. Workflow policy should identify them explicitly and, where appropriate, defer them until reversible prerequisites complete or require explicit controller approval.
+
+### Migration and workflow continuity
+
+Workflow, step, effect, and budget identities survive host migration. Moving to another GPU host never resets spend limits or permits a fresh payment merely because execution restarted.
+
+Duplicate hosts are expected. Canonical workflow state, signer policy, stable effect IDs, budgets, capabilities, and target idempotency/reconciliation contain the race.
+
+Agent-to-agent workflows preserve each Agent's independent authority. One Agent cannot roll back another Agent's finalized state because its own workflow later fails.
 
 ## Portable-agent objects
 
@@ -87,9 +81,9 @@ Still open: succession mechanics, privacy classes, scheduling, reputation, recei
 
 ## Storage candidates
 
-`StorageAgreementV1`: exact content object, duration, provider targets, storage profile, challenge/retrieval policy, budget, privacy, renewal, recovery.
+`StorageAgreementV1`: exact content, duration, provider targets, profile, challenge/retrieval policy, budget, privacy, renewal, recovery.
 
-`StorageHealthV1`: `HEALTHY -> DEGRADED -> AT_RISK -> RECOVERING -> HEALTHY`, plus `UNAVAILABLE`/`EXPIRED`. Health is service state, not finality. Implementation issue `niahcia/niahcia#27` remains non-consensus telemetry after CI is green.
+`StorageHealthV1`: `HEALTHY -> DEGRADED -> AT_RISK -> RECOVERING -> HEALTHY`, plus `UNAVAILABLE`/`EXPIRED`. Health is service state, not finality. `niahcia/niahcia#27` remains non-consensus telemetry after CI is green.
 
 `StorageProviderIndependenceV1`: `SAME_OPERATOR`, `SHARED_DOMAIN`, `UNKNOWN`, `EVIDENCE_OF_SEPARATION`; no central KYC/geolocation/cloud authority.
 
@@ -117,10 +111,10 @@ At this handoff, GitHub work associated with **#266** was red/failing. Avoid ris
 2. Denomination/value/fee vectors.
 3. Remove stale Prototype-0 fixed 2-of-3 language.
 4. Cross-check NCE/1 IDs/domains/signature preimages/storage vectors.
-5. Review current candidate protocol objects without activating them in implementation.
+5. Review candidate protocol objects without activating them in implementation.
 6. Allocate canonical IDs/fields/domains and vectors before implementation activation.
-7. Continue adversarial review of authority, recovery, migration, checkpoint rollback, duplicate execution, and side-effect replay.
-8. Design the next missing layer: multi-step workflow/compensation semantics and deterministic effect reconciliation, without claiming universal distributed transactions across external systems.
+7. Continue adversarial review of authority, recovery, migration, checkpoint rollback, duplicate execution, side-effect replay, workflow compensation, and budget abuse.
+8. Next portable-agent gap: define deterministic effect receipts/reconciliation evidence and how workflow state learns that an external action is OBSERVED/FINALIZED without trusting the execution host's assertion.
 9. Keep both repositories' docs synchronized.
 
 Deliberate consensus review still needed for RandomX stock miner/pool interoperability, public-testnet RandomX epoch/seed parameters, remaining monetary constants, genesis/network parameters, and chain-ID finalization.
@@ -152,6 +146,7 @@ If asked simply to continue: check GitHub status/#266, read spec status, compare
 - `spec/agent-host-migration-v1.md`
 - `spec/agent-checkpoint-v1.md`
 - `spec/side-effect-intent-v1.md`
+- `spec/agent-workflow-v1.md`
 - `spec/agent-manifest-v1.md`
 - `spec/execution-receipt-v1.md`
 - `spec/storage-agreement-v1.md`
