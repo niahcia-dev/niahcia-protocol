@@ -455,6 +455,35 @@ Exclusion is a preimage rule, not a renumbering rule.
 ```
 
 
+## NativeTransactionBody — object type 0x0010
+
+```text
+1   network_id
+2   chain_id
+3   nonce
+4   to_kind
+5   to_payload
+6   value
+7   gas_limit
+8   max_fee_per_gas
+9   data
+```
+
+## SignedNativeTransaction — object type 0x0011
+
+```text
+1   body
+2   public_key
+3   signature
+```
+
+For `SignedNativeTransaction` schema version 1, field `1 body` is a CBOR byte
+string containing the complete canonical NCE/1 serialization of
+`NativeTransactionBody` object type `0x0010`.
+
+Those embedded bytes are exactly the unsigned-body bytes authenticated by the
+transaction signature.
+
 ## StorageChallenge requested_ranges nested encoding
 
 For `StorageChallenge` schema version 1, field `7 requested_ranges` is an array of four-element arrays:

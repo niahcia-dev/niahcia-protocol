@@ -1,6 +1,6 @@
 # Design Doctrine
 
-These rules are architectural constraints, not marketing slogans.
+These rules are architectural and engineering constraints, not marketing slogans.
 
 ## 1. The blockchain is sovereign
 
@@ -46,6 +46,39 @@ Models, execution profiles, jobs, agent manifests, storage manifests, verificati
 ## 10. Protocol v1 describes the future-facing system
 
 Prototype implementations may support only a subset, but unsupported capability classes should not require later protocol redesign.
+
+## 11. Remove and replace — never patch-stack
+
+NIAHCIA development does not accumulate corrective patches on top of obsolete
+designs or implementations.
+
+When a component requires substantial correction or redesign:
+
+1. inspect the complete affected component and its dependencies;
+2. define the intended replacement as a coherent whole;
+3. remove the obsolete implementation or section;
+4. install the replacement cleanly;
+5. audit the resulting component for stale assumptions, duplicated behavior,
+   dead paths, contradictory documentation, and obsolete compatibility logic;
+6. validate the complete resulting state with tests, vectors, builds, or
+   structural checks appropriate to the component;
+7. synchronize protocol specifications, implementation documentation, tests,
+   vectors, registries, and session handoff state where applicable.
+
+Do not solve architectural mistakes by repeatedly appending exceptions,
+special cases, corrective branches, or text mutations.
+
+Small localized edits remain appropriate when the underlying design is still
+correct. The prohibition is against patch stacking as a development strategy,
+not against ordinary maintenance.
+
+Consensus-critical or interoperability-locked behavior is never silently
+replaced. Such changes require explicit versioning, specification review, and
+updated canonical vectors.
+
+This doctrine applies across the NIAHCIA repository family: protocol
+specifications, Rust implementation, compute software, websites, scripts,
+configuration, tests, documentation, and generated artifacts.
 
 ## What NIAHCIA is not
 

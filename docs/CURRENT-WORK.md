@@ -152,7 +152,25 @@ Protocol-visible implementation changes update the applicable sources.
 
 ## Development doctrine
 
-Prefer small, testable milestones. Before public devnet/testnet prioritize deterministic consensus, reproducible vectors, stable network identity, reliable startup/sync, miner/pool interoperability, clear execution-engine boundary, observable failures, and green CI.
+Prefer small, testable milestones. Before public devnet/testnet prioritize
+deterministic consensus, reproducible vectors, stable network identity,
+reliable startup/sync, miner/pool interoperability, clear execution-engine
+boundary, observable failures, and green CI.
+
+Development follows the project-wide **remove-and-replace doctrine** defined in
+`docs/design-doctrine.md`.
+
+Do not accumulate corrective patch stacks. For substantial changes, inspect the
+complete affected component, design the coherent replacement, remove obsolete
+behavior, install the replacement, audit the resulting whole, and validate it.
+
+Small localized edits are appropriate when the underlying design remains
+correct. Locked interoperability behavior is never silently replaced; protocol
+versioning, specifications, registries, and canonical vectors change together.
+
+A protocol-visible implementation change is not complete until its
+specification, tests/vectors, implementation documentation, and this handoff
+are synchronized where applicable.
 
 ## New-session behavior
 

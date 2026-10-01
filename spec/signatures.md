@@ -17,21 +17,39 @@ This specification defines how NIAHCIA signs protocol objects and messages.
 
 ## Controller signatures
 
-Protocol v1 controller/account signatures use:
+Protocol v1 controller/account signatures use secp256k1 ECDSA.
 
-```text
-secp256k1 ECDSA
-```
+Requirements common to all V1 secp256k1 signatures:
 
-with Ethereum-compatible public-key/address recovery.
+- low-`s` canonical signatures;
+- valid `r` and `s` ranges;
+- signatures over a 32-byte domain-separated signing digest;
+- verification against the signer/controller identity required by the schema.
 
-Requirements:
+V1 supports two schema-selected verification profiles.
 
-- low-`s` canonical signatures
-- valid `r` and `s` ranges
-- normalized recovery identifier
-- signatures over a 32-byte domain-separated signing digest
-- verification against the expected controller address
+### Explicit-key profile
+
+When the schema carries the signer's canonical secp256k1 public key, the
+signature uses the fixed-width 64-byte representation `r || s`, where each
+component is exactly 32-byte unsigned big-endian.
+
+No recovery identifier is serialized because the public key is supplied
+directly.
+
+NativeTransactionV1 uses this profile with a 65-byte uncompressed SEC1 public
+key (`0x04 || X || Y`) and a 64-byte `r || s` signature.
+
+### Recoverable profile
+
+A schema requiring public-key/address recovery MAY define a recoverable
+secp256k1 signature containing a normalized recovery identifier.
+
+The recovery identifier is required only when the schema explicitly selects
+this profile. It MUST NOT be silently appended to an explicit-key signature.
+
+The exact recoverable wire representation MUST be specified by the schema
+before that schema is interoperability-locked.
 
 ## Signing digest
 
