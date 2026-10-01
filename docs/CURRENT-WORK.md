@@ -63,6 +63,8 @@ Proof-of-service is payment/reward evidence, not chain work. Service-node status
 
 Storage providers may store ciphertext and prove possession/availability without receiving decryption, agent governance, treasury, capability, or succession authority.
 
+Distinct provider keys are not proof of independent durability. Unknown provider independence must remain unknown rather than being promoted to independent merely to satisfy a replica target.
+
 ### Canonical protocol data
 
 NCE/1 deterministic CBOR is the protocol serialization foundation for canonical protocol objects. JSON is suitable for APIs/debugging but is not the canonical hashed representation.
@@ -71,77 +73,25 @@ Persistent identifiers, signing digests, and commitments require explicit domain
 
 ## Locked / substantially defined work
 
-The protocol repository currently contains specifications and/or interoperability fixtures for:
-
-- `BlockHeaderV1`
-- cumulative-work fork choice and RandomX PoW rules
-- difficulty adjustment / ASERT research and vectors
-- timestamp rules
-- transaction Merkle commitments
-- chain observations/state
-- deterministic canonical serialization (NCE/1 foundation)
-- hashing/identifier domains
-- signatures
-- object/field type registries
-- native Address V1
-- Agent / AgentVersion
-- Model
-- ExecutionProfile
-- Operator
-- ComputeWorker
-- ServiceNode
-- Job
-- VerificationPolicy
-- Capability
-- MemoryDescriptor
-- PaymentPlan
-- ResultCommitment
-- storage commitments
-- storage challenges
-- storage responses
-- storage Merkle structures
-- proof-of-service
-- service epoch reports
-- service-node security profile
-- snapshots and relay/availability evidence
+The protocol repository currently contains specifications and/or interoperability fixtures for core consensus, canonical serialization, identities, addresses, agent/compute/service objects, storage commitments/challenges/responses/Merkle structures, proof-of-service, service epoch reports, service-node security, snapshots, and relay/availability evidence.
 
 See `docs/spec-status.md` for the authoritative detailed inventory and status rather than assuming every listed item is frozen.
 
 ## New portable-agent candidates
 
-Two new **CANDIDATE** protocol surfaces have been added. They are intentionally not locked or implemented while core CI/consensus work is unresolved.
+`AgentManifestV1` (`spec/agent-manifest-v1.md`) defines the candidate portability contract binding an exact AgentVersion to lineage, model/execution policy, capabilities, memory descriptors, payment policy, privacy policy, succession policy, and storage manifests.
 
-### AgentManifestV1
+`ExecutionReceiptV1` (`spec/execution-receipt-v1.md`) defines a candidate privacy-aware execution receipt binding a Job to the exact agent/version/manifest, model/profile, worker, result commitment, verification policy/evidence, resource-accounting commitment, and settlement commitment.
 
-`spec/agent-manifest-v1.md` defines the candidate portability contract binding an exact AgentVersion to lineage, model/execution policy, capabilities, memory descriptors, payment policy, privacy policy, succession policy, and storage manifests.
-
-Goal: a compatible independent host can resolve the same authorized execution environment without becoming the owner of the agent. Private memory may remain encrypted/access-controlled; portability does not imply public disclosure.
-
-### ExecutionReceiptV1
-
-`spec/execution-receipt-v1.md` defines a candidate privacy-aware execution receipt binding a Job to the exact agent/version/manifest, model/profile, worker, result commitment, verification policy/evidence, resource-accounting commitment, and settlement commitment.
-
-Goal: create an independently auditable history of machine work without requiring private prompts/results/memory to be published.
-
-### Still deliberately open
-
-Do not prematurely lock succession state-machine semantics, concrete privacy policy classes, host scheduling/selection, reputation/ranking, receipt inclusion/on-chain commitment mechanism, one TEE/privacy vendor, or deterministic-output requirements for all AI jobs.
-
-These candidates need NCE/1 field/type/domain allocation, canonical vectors, threat review, and implementation experience before freeze.
+Do not prematurely lock succession state-machine semantics, concrete privacy classes, host scheduling/selection, reputation/ranking, receipt inclusion/on-chain commitment, one TEE/privacy vendor, or deterministic-output requirements for all AI jobs.
 
 ## New storage durability candidates
-
-Two additional **CANDIDATE** protocol surfaces now describe the missing layer above storage challenges/proofs.
 
 ### StorageAgreementV1
 
 `spec/storage-agreement-v1.md` expresses that an exact content-addressed object should remain available for a defined duration with a target/minimum provider level, storage profile, challenge/retrieval policy, payment plan/budget, privacy policy, renewal policy, and recovery policy.
 
-It separates **why/how long content should remain stored** from the lower-level proofs that a provider possesses/serves it.
-
 Initial implementation direction is straightforward chunked replication. Erasure coding is a future versioned storage profile rather than a pre-alpha requirement.
-
-An autonomous agent may eventually fund renewal of its own model/memory persistence through these mechanisms without giving a storage provider control of the agent treasury.
 
 ### StorageHealthV1
 
@@ -153,26 +103,41 @@ HEALTHY -> DEGRADED -> AT_RISK -> RECOVERING -> HEALTHY
 EXPIRED
 ```
 
-Health is derived service state, **not chain finality**. Recovery should be permissionless: an eligible provider can discover an under-replicated exact object, retrieve surviving canonical chunks, verify/reconstruct it, begin serving it, and restore durability without permission from a failed provider or the original publisher.
+Health is derived service state, **not chain finality**. Recovery should be permissionless: an eligible provider can discover an under-replicated exact object, retrieve surviving canonical chunks, verify/reconstruct it, begin serving it, and restore durability without permission from a failed provider or original publisher.
 
-Before deterministic observation windows/evidence rules are locked, implementations may expose health only as non-authoritative telemetry.
+Implementation follow-up is tracked in `niahcia/niahcia#27` and is intentionally limited to non-consensus telemetry after current CI is green.
 
-Implementation follow-up is tracked in `niahcia/niahcia#27`: implement a non-consensus storage-health telemetry scaffold only after current CI is green. No reward, fork-choice, settlement, or consensus changes are authorized by that issue.
+### StorageProviderIndependenceV1
+
+`spec/storage-provider-independence-v1.md` defines a candidate conservative model for distinguishing provider identity count from actual durability evidence.
+
+Key rule:
+
+> five provider keys are not necessarily five independent copies.
+
+Candidate evidence categories are `SAME_OPERATOR`, `SHARED_DOMAIN`, `UNKNOWN`, and `EVIDENCE_OF_SEPARATION`. `UNKNOWN` remains unknown; it is not promoted to independent merely to satisfy a target.
+
+The model may eventually consider operator linkage, network/ASN domains, facility/infrastructure domains, long-term correlated failures, independent observations, bonds/service history, and concurrent unpredictable challenges. No one signal proves independence and no production independence score is locked.
+
+NIAHCIA must not require one central KYC, cloud, geolocation, or infrastructure authority to decide provider eligibility. Exact physical addresses and other unnecessary sensitive provider information should not be required publicly.
+
+A future StorageAgreement revision should be able to bind a versioned `independence_policy_id`, but the current candidate hash/schema is not being casually modified while CI is red. That change should be made with NCE/1 field allocation and vectors.
+
+### Storage threat model status
+
+`docs/threat-model.md` now explicitly covers Sybil replicas, correlated failure domains, just-in-time storage, challenge replay, fake retrieval/bandwidth farming, deliberate degradation/repair farming, withholding/extortion, corrupt reconstruction, encrypted-memory authority separation, key loss, object poisoning, resource-exhaustion agreements, and StorageHealth manipulation.
+
+Important safety conclusions:
+
+- raw self-reported bandwidth is not sufficient for production rewards;
+- storage durability and encryption-key custody are separate problems;
+- storage providers must not become silent key escrow;
+- repair economics must not make destruction more profitable than continuous storage;
+- recovery preserves exact committed content, not semantically similar substitutes.
 
 ### Storage work deliberately left open
 
-Do not yet lock:
-
-- exact storage pricing/rewards;
-- provider independence/Sybil scoring;
-- automatic renewal semantics;
-- encryption/key distribution;
-- erasure-coding parameters;
-- repair-provider selection;
-- geographic placement;
-- health observation windows/hysteresis;
-- compensable bandwidth accounting;
-- consensus inclusion/commitment of agreements.
+Do not yet lock exact storage pricing/rewards, provider independence scoring, automatic renewal semantics, encryption/key distribution, erasure-coding parameters, repair-provider selection, geographic placement, health observation windows/hysteresis, compensable bandwidth accounting, infrastructure-attestation requirements, or consensus inclusion/commitment of agreements.
 
 These need threat modeling, canonical vectors, and devnet evidence.
 
@@ -188,31 +153,21 @@ The current direction is **8 decimal places**, not Ethereum-style 18 decimal pla
 
 Consensus/accounting arithmetic must use integers, not floating point. Fee arithmetic, supply representation, denominations, chain IDs, overflow behavior, and conversion boundaries must remain explicitly specified and tested.
 
-The monetary/fee surface should receive protocol-owned interoperability vectors before it is considered fully frozen.
-
 ## RandomX and miner interoperability — important unresolved item
 
-RandomX remains the PoW direction, but miner interoperability needs deliberate review.
+RandomX remains the PoW direction, but miner interoperability needs deliberate review. An important project goal is that ordinary/common RandomX mining software and pools should be able to mine NIAHCIA without requiring a custom NIAHCIA miner wherever practical.
 
-The current `randomx-pow-v1.md` defines the RandomX input as the exact canonical 164-byte `BlockHeaderV1` and provides a locked RandomX fixture.
-
-However, an important project goal is that ordinary/common RandomX mining software and pools should be able to mine NIAHCIA without requiring a custom NIAHCIA miner wherever practical. The current header/blob assumptions therefore require review against stock/common RandomX miner and pool protocols before public testnet behavior is frozen.
-
-Do **not** casually change the existing RandomX input/vector merely to make a miner work. First define the desired pool/miner interoperability boundary, then version/update the consensus specification and vectors together if a change is necessary.
+Do **not** casually change the existing RandomX input/vector merely to make a miner work. First define the desired pool/miner interoperability boundary, then version/update consensus specification and vectors together if necessary.
 
 Building a dedicated NIAHCIA miner is currently lower priority than ensuring common RandomX mining software can interoperate with NIAHCIA.
 
 ## Current blocker / caution
 
-At the time this handoff was created, GitHub work associated with **#266** was red/failing and still needed attention. Avoid stacking risky consensus changes on top of unresolved failures. Re-check current GitHub status before assuming this blocker still exists.
+At the time this handoff was updated, GitHub work associated with **#266** was red/failing and still needed attention. Avoid stacking risky consensus changes on top of unresolved failures. Re-check current GitHub status before assuming this blocker still exists.
 
 Formatting/CI cleanup for #266 was already identified as work to revisit. The existing reminder may also refer to this item, but GitHub state is authoritative.
 
 ## Current audit findings
-
-A repository-wide protocol audit found several categories of remaining work rather than a need for another broad redesign.
-
-### Highest-priority safe work
 
 While implementation CI/blockers are unresolved, prefer specification/vector cleanup that does not alter consensus behavior:
 
@@ -220,41 +175,20 @@ While implementation CI/blockers are unresolved, prefer specification/vector cle
 2. Add denomination/value/fee arithmetic vectors.
 3. Audit and remove stale Prototype-0 language, especially old fixed 2-of-3 assumptions.
 4. Cross-check NCE/1 serialization, field IDs, object type IDs, domain separation, signature preimages, and storage vectors for consistency.
-5. Review AgentManifestV1, ExecutionReceiptV1, StorageAgreementV1, and StorageHealthV1 at the protocol level; do not force them into consensus implementation while CI is red.
+5. Review AgentManifestV1, ExecutionReceiptV1, StorageAgreementV1, StorageHealthV1, and StorageProviderIndependenceV1 at protocol level only while CI is red.
 6. Define canonical IDs/fields/domains and test vectors for candidates before implementation activation.
 7. Ensure implementation docs and `niahcia-protocol` remain synchronized.
 
-### Consensus work that needs deliberate review
-
-- RandomX stock-miner/pool interoperability.
-- Final public-testnet RandomX epoch/seed parameters.
-- Any remaining monetary/supply/fee constants that are still candidates rather than frozen rules.
-- Genesis/network parameter finalization.
-- Chain-ID namespace/finality of network identifiers.
-
-### Protocol work still needing maturity
-
-The existence of a schema does not mean it is frozen. Agent, AgentManifest, ExecutionReceipt, Job, compute, payment, capability, memory, privacy, succession, verification, StorageAgreement, and StorageHealth objects need canonical vectors, threat analysis, and implementation experience before declaring the entire object family stable.
+Consensus work needing deliberate review includes RandomX stock-miner/pool interoperability, final public-testnet RandomX epoch/seed parameters, remaining monetary/supply/fee constants, genesis/network parameters, and chain-ID namespace/finality.
 
 ## Documentation model
 
 There are two intentional sources of technical truth and both must move with the code:
 
-### `niahcia/niahcia`
-
-Implementation repository. It should document the behavior actually implemented by the node/runtime and contain implementation tests/vectors where appropriate.
-
-### `niahcia/niahcia-protocol`
-
-Protocol repository. It defines architecture, wire/canonical formats, interoperability rules, protocol objects, security boundaries, design rationale, research, and protocol-owned vectors.
+- `niahcia/niahcia` — implementation behavior/tests/documentation.
+- `niahcia/niahcia-protocol` — implementation-independent architecture, formats, interoperability rules, security boundaries, research, and protocol-owned vectors.
 
 When implementation changes protocol-visible behavior, update both sides in the same workstream.
-
-## Repository roles
-
-Do not turn `niahcia-protocol` into a second implementation repository. Its role is the implementation-independent specification and interoperability contract.
-
-The implementation repository should conform to it. When experimentation proves a protocol rule needs to change, update/version the protocol deliberately rather than allowing implementation behavior and documentation to drift apart.
 
 ## Development doctrine
 
@@ -270,33 +204,30 @@ If asked simply to **continue**, do not begin a new architecture brainstorm.
 
 Instead:
 
-1. Check the current GitHub status, especially unresolved/red work including #266 if it still exists.
-2. Read the latest `docs/spec-status.md`.
-3. Compare current implementation against the relevant protocol specs.
+1. Check current GitHub status, especially unresolved/red work including #266 if it still exists.
+2. Read `docs/spec-status.md`.
+3. Compare implementation against relevant protocol specs.
 4. Pick the highest-priority unresolved item that can be changed safely.
 5. Implement/test it if appropriate.
 6. Update implementation docs and protocol docs together.
 7. Update this handoff when priorities or blockers materially change.
 
-If CI remains blocked, continue the safe vector/documentation audit rather than introducing unrelated consensus changes.
+If CI remains blocked, continue safe vector/documentation/threat-model work rather than introducing unrelated consensus changes.
 
 ## Quick references
 
-Start here:
-
 - `docs/CURRENT-WORK.md` — this handoff
 - `docs/spec-status.md` — detailed protocol status/inventory
-- `docs/why-niahcia.md` — architectural rationale and differentiation
-- `docs/protocol-architecture-v1.md` — architecture
-- `docs/design-doctrine.md` — design constraints
+- `docs/why-niahcia.md` — architectural rationale
 - `docs/threat-model.md` — security model
-- `spec/agent-manifest-v1.md` — candidate portable agent environment
-- `spec/execution-receipt-v1.md` — candidate auditable machine-work receipt
-- `spec/storage-agreement-v1.md` — candidate durability/economic storage agreement
-- `spec/storage-health-v1.md` — candidate storage health/recovery lifecycle
+- `spec/agent-manifest-v1.md` — portable agent environment candidate
+- `spec/execution-receipt-v1.md` — machine-work receipt candidate
+- `spec/storage-agreement-v1.md` — durability/economic storage candidate
+- `spec/storage-health-v1.md` — storage health/recovery candidate
+- `spec/storage-provider-independence-v1.md` — provider/failure-domain candidate
 - `spec/network-parameters-v1.md` — network parameters
 - `spec/block-header-v1.md` — block header
-- `spec/randomx-pow-v1.md` — current RandomX consensus candidate
+- `spec/randomx-pow-v1.md` — RandomX consensus candidate
 - `spec/canonical-serialization.md` — NCE/1
 - `spec/domain-separation.md` — hash/signature domains
 - `spec/address-v1.md` — native addresses
