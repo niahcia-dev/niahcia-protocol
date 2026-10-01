@@ -10,10 +10,11 @@ A new session should:
 
 1. Read this file first.
 2. Read `docs/spec-status.md` for the complete specification inventory and maturity/status of each protocol surface.
-3. Read the relevant specification before changing implementation behavior.
-4. Inspect the current `niahcia/niahcia` implementation and open/failed GitHub work before making code changes.
-5. Keep both implementation documentation and `niahcia-protocol` documentation synchronized with code changes.
-6. Do not silently replace locked interoperability behavior. If a locked rule must change, version it explicitly and update its vectors/specification.
+3. Read `docs/why-niahcia.md` for the architectural rationale and differentiation NIAHCIA is trying to preserve.
+4. Read the relevant specification before changing implementation behavior.
+5. Inspect the current `niahcia/niahcia` implementation and open/failed GitHub work before making code changes.
+6. Keep both implementation documentation and `niahcia-protocol` documentation synchronized with code changes.
+7. Do not silently replace locked interoperability behavior. If a locked rule must change, version it explicitly and update its vectors/specification.
 
 ## Project objective
 
@@ -25,6 +26,8 @@ NIAHCIA is a decentralized AI + blockchain network designed to separate several 
 - Service/storage nodes provide storage, archival, relay, snapshot, observation, and measurable proof-of-service functions without becoming a second consensus authority.
 - Agents, models, execution profiles, jobs, capabilities, memory, verification policies, and payment plans are explicit protocol objects rather than assumptions hidden inside one application.
 - Smart-contract/EVM execution is integrated through Reth while NIAHCIA retains its own chain identity and consensus boundary.
+
+The rationale behind this composition is documented in `docs/why-niahcia.md`. The intended differentiation is the protocol-native relationship between independently replaceable consensus, compute, storage, verification, agents, and settlement—not dependence on one particular AI model or provider.
 
 ## Fundamental architecture rules
 
@@ -222,6 +225,7 @@ Start here:
 
 - `docs/CURRENT-WORK.md` — this handoff
 - `docs/spec-status.md` — detailed protocol status/inventory
+- `docs/why-niahcia.md` — architectural rationale and differentiation
 - `docs/protocol-architecture-v1.md` — architecture
 - `docs/design-doctrine.md` — design constraints
 - `docs/threat-model.md` — security model
