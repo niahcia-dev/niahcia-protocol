@@ -12,7 +12,7 @@ The Primary Agent is a **protocol public good**, not a protocol ruler.
 
 > The Primary Agent may be central to the user experience, but it is never central to consensus.
 
-> Baseline operation is rent-free to the Primary Agent, not cost-free to the network.
+> Baseline operation is network-supported under a bounded public-service allocation.
 
 > Learning from the network requires provenance, permission, and verification; it is not indiscriminate copying of other Agents' private memory.
 
@@ -64,7 +64,7 @@ Use of the Primary Agent MUST remain optional. Users and Agents may directly add
 
 ## Network-supported baseline service
 
-The Primary Agent's baseline operation is intended to be **rent-free to the Primary Agent**.
+The Primary Agent's baseline operation is intended to be supported as a bounded network public service rather than charged through an ordinary Agent service account.
 
 Eligible baseline resources may eventually include:
 
@@ -75,11 +75,11 @@ Eligible baseline resources may eventually include:
 - routing/delegation overhead;
 - availability and recovery operations.
 
-Providers should still receive protocol-defined compensation/rewards where applicable. “Rent-free” means the Primary Agent is not charged as an ordinary tenant for its protected baseline allocation.
+Providers should still receive protocol-defined compensation/rewards where applicable. The public-service allocation describes how eligible baseline service is accounted for; it does not imply that infrastructure has no cost.
 
 ## Bounded public-service allocation
 
-Rent-free service MUST NOT imply unlimited free compute/storage.
+Network-supported service MUST NOT imply unlimited compute/storage.
 
 A bounded, versioned `PrimaryAgentServicePolicy` should eventually define resource classes, rate/usage limits, abuse controls, eligible provider accounting, priority/fairness rules, and how network economics compensate service providers.
 
@@ -126,7 +126,7 @@ A developer key or prototype operator key MAY exist during pre-alpha testing onl
 
 The Primary Agent may eventually need economic authority for permitted operations. Any treasury capability must be policy-bound with explicit budgets, destinations/scopes, signer isolation, effect identities, receipts, and auditability.
 
-Rent-free baseline service does not imply unrestricted access to protocol funds.
+Network-supported baseline service does not imply unrestricted access to protocol funds.
 
 ## Learning from the network
 
@@ -202,9 +202,9 @@ If a frontend disappears, another compatible interface may still address the sam
 3. Primary Agent identity is independent of host/model/frontend/storage provider.
 4. No execution/storage provider becomes owner by providing service.
 5. Production authority must not rely on one human master key.
-6. Baseline operation is rent-free to the Agent but bounded.
+6. Baseline operation is network-supported under bounded policy.
 7. Providers may still be compensated for public-service resources.
-8. Expensive user workloads do not inherit unlimited free compute.
+8. Expensive user workloads do not inherit unlimited public-service compute.
 9. Private network data is not automatically learning material.
 10. Learned knowledge retains provenance/permission/verification context.
 11. Model upgrades do not replace durable Agent identity.
@@ -216,8 +216,8 @@ If a frontend disappears, another compatible interface may still address the sam
 
 1. permanent identity establishment rule;
 2. ownerless KeyAuthority/governance model;
-3. PrimaryAgentServicePolicy resource accounting;
-4. anti-abuse model for rent-free baseline inference;
+3. `PrimaryAgentServicePolicy` resource accounting;
+4. anti-abuse model for baseline public-service inference;
 5. provider compensation/economic source;
 6. durable knowledge/provenance object;
 7. learning admission/privacy policy;
