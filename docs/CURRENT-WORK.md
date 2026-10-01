@@ -17,7 +17,7 @@
 ## Core architecture
 
 - CPU PoW is canonical chain authority; RandomX is current candidate.
-- GPU/accelerator AI compute is a separate economic role from mining.
+- GPU/accelerator AI compute is separate from mining.
 - Storage/service nodes provide measurable service but never fork-choice/finality authority.
 - Agents/models/jobs/capabilities/memory/verification/payment are explicit protocol objects.
 - Reth supplies EVM execution while NIAHCIA retains chain identity/consensus boundary.
@@ -35,75 +35,69 @@
 
 ## Cryptographic authority candidates
 
-### KeyAuthorityV1
+`KeyAuthorityV1`: durable NIAHCIA identity/address is distinct from one eternal key; separates signing/control, encryption, delegated/session authority, and recovery. Bulk private state uses random DEKs rather than direct wallet-key encryption. Long-term signing keys should be isolated from AI runtimes.
 
-`spec/key-authority-v1.md`: durable NIAHCIA identity/address is distinct from one eternal private key. Separates signing/control authority, encryption authority, bounded delegated/session authority, and explicit recovery policy.
+`KeyRotationV1`: same durable subject moves between authority epochs; stale/competing rotations require deterministic rejection.
 
-Bulk private state uses random symmetric data-encryption keys (DEKs), not direct encryption with the wallet/signing key. Long-term signing keys should be isolated from AI runtimes. Structured canonical policy checks precede privileged signing.
-
-An autonomous Agent may have its own durable NIAHCIA identity distinct from its creator/controller.
-
-### KeyRotationV1
-
-`spec/key-rotation-v1.md`: same durable subject can move from authority epoch N to N+1. Historical signatures remain attributable to their valid epoch; stale/competing rotations require deterministic rejection.
-
-### RecoveryPolicyV1
-
-`spec/recovery-policy-v1.md`: opt-in recovery candidate. Candidate classes include NONE, DESIGNATED, THRESHOLD, CONTRACT, DELAYED. No NIAHCIA master recovery key exists. Recovery normally replaces authority rather than reconstructing a lost/compromised signing key.
-
-Control recovery and historical memory decryption are separate. Storage nodes never become silent key escrow.
+`RecoveryPolicyV1`: opt-in recovery; candidate NONE/DESIGNATED/THRESHOLD/CONTRACT/DELAYED classes. No NIAHCIA master recovery key. Control recovery and historical memory decryption are separate.
 
 ## Secure portable execution
 
 ### AgentHostMigrationV1
 
-`spec/agent-host-migration-v1.md` defines the candidate security boundary for moving Agent execution between hosts.
+`spec/agent-host-migration-v1.md`: **execution is portable; authority is not handed to the execution host.** Destination receives bounded session capability and authorized memory scope, never automatic master signing/treasury/recovery/succession authority.
+
+Migration should work without cooperation from a dead old host when durable committed state survives. Ordinary hosts may see plaintext intentionally delivered to them; migration/encryption-at-rest is not private inference.
+
+### AgentCheckpointV1
+
+`spec/agent-checkpoint-v1.md` now defines the candidate durable resume boundary.
 
 Central rule:
 
-> execution is portable; authority is not handed to the execution host.
+> Agent state can be checkpointed; external reality cannot be rolled back with it.
 
-A destination host resolves the exact Agent/AgentVersion/AgentManifest and current KeyAuthority epoch, then receives only a bounded session capability and authorized memory scope. It does **not** receive the Agent's master signing key, unrestricted treasury, recovery/succession authority, or all historical memory keys.
+Checkpoints bind exact Agent, AgentVersion/Manifest, KeyAuthority epoch, parent checkpoint, monotonic sequence, memory/private-state roots, pending/completed effects, and active-job state. Checkpoints form a lineage and must not permit silent rollback.
 
-The candidate uses envelope-encryption semantics conceptually: durable memory is ciphertext under DEKs; an authorized execution session obtains only the key material required for its permitted scope. The exact DEK-release mechanism is deliberately open (session-key wrapping, threshold release, optional attestation/private-compute profiles, etc.).
+A checkpoint is a state commitment, **not** proof that every external side effect occurred exactly once. Local uncommitted process state is not durable Agent truth.
 
-Migration must work without cooperation from a dead/failed old host when durable checkpoint/storage state survives elsewhere. Local host disk is not authoritative persistence.
+Concurrent hosts can produce competing checkpoint children. Until branch/merge/current-state semantics are locked, those are conflicts requiring reconciliation rather than silent state merging.
 
-### Durable checkpoints and duplicate execution
+### SideEffectIntentV1
 
-Portable execution requires an explicit committed checkpoint/state boundary. Work after the last durable checkpoint may be retried after host failure.
+`spec/side-effect-intent-v1.md` defines stable identity for payments, transactions, messages, storage mutations, tool/API calls, purchases, and agent-to-agent economic effects.
 
-NIAHCIA must assume old and new hosts can temporarily execute concurrently. Safety cannot depend on “one Agent = one process.” It must come from job/session IDs, current state versions, bounded capabilities, signer policy, spending limits, replay protection, and canonical state transitions.
+Central rule:
 
-Exactly-once external side effects cannot be inferred from memory checkpointing. Payments/tool actions need idempotency/receipt/replay semantics of their own.
+> Retry the intent, not a newly invented action.
 
-### Host confidentiality limitation
+The same logical retry retains the same `effect_id`. A genuinely new action gets a new effect identity. `UNKNOWN` is a first-class operational state: timeout/lost acknowledgement does not prove failure.
 
-Ordinary compute hosts may see plaintext intentionally delivered to them. Migration/encryption-at-rest does not equal private inference. Stronger confidentiality requires a separately versioned private-compute mechanism; no single TEE vendor should become universal protocol authority.
+Where a target supports idempotency keys, `effect_id` should be used/mapped to them. Where it does not, NIAHCIA must not claim universal exactly-once execution; adapters reconcile target state before retrying.
+
+A crash after submission but before checkpoint is a critical ambiguity case. Resume logic reconciles the existing effect before issuing another action. Checkpoint rollback never authorizes replay of a finalized external effect.
 
 ## Portable-agent objects
 
 `AgentManifestV1`: exact AgentVersion + lineage + execution/model policy + capabilities + memory + payment/privacy/succession/storage references.
 
-`ExecutionReceiptV1`: binds a Job to exact agent/version/manifest, model/profile, worker, result commitment, verification evidence, resource accounting, and settlement while permitting private payloads to remain committed rather than public.
+`ExecutionReceiptV1`: Job -> exact agent/version/manifest, model/profile, worker, result commitment, verification evidence, resource accounting, settlement.
 
-Still open: succession mechanics, privacy classes, scheduling, reputation, receipt inclusion, one TEE choice, universal deterministic-output assumptions.
+Still open: succession mechanics, privacy classes, scheduling, reputation, receipt inclusion, private compute, universal deterministic-output assumptions.
 
 ## Storage candidates
 
-`StorageAgreementV1`: exact content object, duration, provider targets, storage profile, challenge/retrieval policy, budget, privacy, renewal, recovery. Start with chunked replication; erasure coding later.
+`StorageAgreementV1`: exact content object, duration, provider targets, storage profile, challenge/retrieval policy, budget, privacy, renewal, recovery.
 
-`StorageHealthV1`: `HEALTHY -> DEGRADED -> AT_RISK -> RECOVERING -> HEALTHY`, with `UNAVAILABLE` and `EXPIRED`. Health is service state, not finality. Implementation issue `niahcia/niahcia#27` is non-consensus telemetry only after CI is green.
+`StorageHealthV1`: `HEALTHY -> DEGRADED -> AT_RISK -> RECOVERING -> HEALTHY`, plus `UNAVAILABLE`/`EXPIRED`. Health is service state, not finality. Implementation issue `niahcia/niahcia#27` remains non-consensus telemetry after CI is green.
 
-`StorageProviderIndependenceV1`: categories `SAME_OPERATOR`, `SHARED_DOMAIN`, `UNKNOWN`, `EVIDENCE_OF_SEPARATION`; no central KYC/geolocation/cloud authority.
+`StorageProviderIndependenceV1`: `SAME_OPERATOR`, `SHARED_DOMAIN`, `UNKNOWN`, `EVIDENCE_OF_SEPARATION`; no central KYC/geolocation/cloud authority.
 
-`docs/threat-model.md` covers storage Sybil/correlation, challenge/replay, fake traffic, repair farming, withholding, corrupt reconstruction, key loss, object poisoning, resource exhaustion, health manipulation, plus KeyAuthority/recovery/migration threats.
+`docs/threat-model.md` covers storage, authority/recovery, migration, signer and duplicate-execution threats.
 
 ## Native addresses
 
-Address V1 remains locked pre-alpha: Bech32m; version `0x01`; 22-byte decoded payload; Account `0x00`; Contract `0x01`; HRPs `niah`, `tniah`, `dniah`.
-
-KeyAuthority does not alter locked address encoding; it defines versioned authority behind durable identity.
+Address V1 remains locked pre-alpha: Bech32m; version `0x01`; 22-byte decoded payload; Account `0x00`; Contract `0x01`; HRPs `niah`, `tniah`, `dniah`. KeyAuthority does not alter locked address encoding.
 
 ## Monetary representation
 
@@ -111,7 +105,7 @@ Current direction: **8 decimals**; integer consensus/accounting arithmetic only.
 
 ## RandomX interoperability
 
-RandomX remains PoW direction. Ordinary/common RandomX miner/pool compatibility is preferred where protocol-safe. Do not casually change locked RandomX inputs/vectors for miner convenience; define/version the interoperability boundary deliberately. Dedicated NIAHCIA miner remains lower priority.
+RandomX remains PoW direction. Ordinary/common RandomX miner/pool compatibility is preferred where protocol-safe. Do not change locked RandomX inputs/vectors merely for miner convenience. Dedicated NIAHCIA miner remains lower priority.
 
 ## Current blocker
 
@@ -123,10 +117,11 @@ At this handoff, GitHub work associated with **#266** was red/failing. Avoid ris
 2. Denomination/value/fee vectors.
 3. Remove stale Prototype-0 fixed 2-of-3 language.
 4. Cross-check NCE/1 IDs/domains/signature preimages/storage vectors.
-5. Review candidate AgentManifest, ExecutionReceipt, StorageAgreement, StorageHealth, StorageProviderIndependence, KeyAuthority, KeyRotation, RecoveryPolicy, and AgentHostMigration only at protocol level.
+5. Review current candidate protocol objects without activating them in implementation.
 6. Allocate canonical IDs/fields/domains and vectors before implementation activation.
-7. Continue adversarial review of signer isolation, recovery/guardian abuse, authority rollback, capability leakage, memory unlock, migration duplication, and side-effect replay.
-8. Keep both repositories' docs synchronized.
+7. Continue adversarial review of authority, recovery, migration, checkpoint rollback, duplicate execution, and side-effect replay.
+8. Design the next missing layer: multi-step workflow/compensation semantics and deterministic effect reconciliation, without claiming universal distributed transactions across external systems.
+9. Keep both repositories' docs synchronized.
 
 Deliberate consensus review still needed for RandomX stock miner/pool interoperability, public-testnet RandomX epoch/seed parameters, remaining monetary constants, genesis/network parameters, and chain-ID finalization.
 
@@ -155,6 +150,8 @@ If asked simply to continue: check GitHub status/#266, read spec status, compare
 - `spec/key-rotation-v1.md`
 - `spec/recovery-policy-v1.md`
 - `spec/agent-host-migration-v1.md`
+- `spec/agent-checkpoint-v1.md`
+- `spec/side-effect-intent-v1.md`
 - `spec/agent-manifest-v1.md`
 - `spec/execution-receipt-v1.md`
 - `spec/storage-agreement-v1.md`
