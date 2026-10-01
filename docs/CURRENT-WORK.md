@@ -29,6 +29,8 @@ NIAHCIA is a decentralized AI + blockchain network designed to separate several 
 
 The rationale behind this composition is documented in `docs/why-niahcia.md`. The intended differentiation is the protocol-native relationship between independently replaceable consensus, compute, storage, verification, agents, and settlement—not dependence on one particular AI model or provider.
 
+A newly explicit differentiation objective is **portable agent sovereignty**: an agent's identity, authorized state, capabilities, economic relationships, lineage, and execution history should remain protocol-resolvable independently of whichever physical host currently executes it.
+
 ## Fundamental architecture rules
 
 These decisions should be treated as architectural invariants unless deliberately revisited:
@@ -44,6 +46,8 @@ Service/storage nodes do **not** vote on, finalize, veto, or otherwise choose th
 AI compute is not required of miners. GPU/accelerator compute and CPU mining are separate economic/service roles.
 
 The compute protocol must remain capable of supporting different models, runtimes, hardware, verification mechanisms, and workload types without requiring PoW consensus redesign.
+
+Execution hosts are replaceable resources. Hosting an agent MUST NOT automatically grant ownership/control of the agent, its treasury, or its full capabilities.
 
 ### Verification
 
@@ -99,6 +103,45 @@ The protocol repository currently contains specifications and/or interoperabilit
 
 See `docs/spec-status.md` for the authoritative detailed inventory and status rather than assuming every listed item is frozen.
 
+## New portable-agent candidates
+
+Two new **CANDIDATE** protocol surfaces have been added. They are intentionally not locked or implemented while core CI/consensus work is unresolved.
+
+### AgentManifestV1
+
+`spec/agent-manifest-v1.md` defines the candidate portability contract binding an exact AgentVersion to:
+
+- lineage;
+- model/execution policy;
+- capabilities;
+- memory descriptors;
+- payment policy;
+- privacy policy;
+- succession policy;
+- storage manifests.
+
+Goal: a compatible independent host can resolve the same authorized execution environment without becoming the owner of the agent. Private memory may remain encrypted/access-controlled; portability does not imply public disclosure.
+
+### ExecutionReceiptV1
+
+`spec/execution-receipt-v1.md` defines a candidate privacy-aware execution receipt binding a Job to the exact agent/version/manifest, model/profile, worker, result commitment, verification policy/evidence, resource-accounting commitment, and settlement commitment.
+
+Goal: create an independently auditable history of machine work without requiring private prompts/results/memory to be published.
+
+### Still deliberately open
+
+Do not prematurely lock:
+
+- succession state-machine semantics;
+- concrete privacy policy classes;
+- host scheduling/selection;
+- reputation/ranking;
+- receipt inclusion/on-chain commitment mechanism;
+- one TEE/privacy vendor;
+- deterministic-output requirements for all AI jobs.
+
+These candidates need NCE/1 field/type/domain allocation, canonical vectors, threat review, and implementation experience before freeze.
+
 ## Native addresses
 
 Address V1 is locked for pre-alpha interoperability:
@@ -152,7 +195,8 @@ While implementation CI/blockers are unresolved, prefer specification/vector cle
 2. Add denomination/value/fee arithmetic vectors.
 3. Audit and remove stale Prototype-0 language, especially old fixed 2-of-3 assumptions.
 4. Cross-check NCE/1 serialization, field IDs, object type IDs, domain separation, signature preimages, and storage vectors for consistency.
-5. Ensure implementation docs and `niahcia-protocol` remain synchronized.
+5. Design/review AgentManifestV1 and ExecutionReceiptV1 only at the protocol level; do not force them into consensus implementation while CI is red.
+6. Ensure implementation docs and `niahcia-protocol` remain synchronized.
 
 ### Consensus work that needs deliberate review
 
@@ -164,7 +208,7 @@ While implementation CI/blockers are unresolved, prefer specification/vector cle
 
 ### Protocol work still needing maturity
 
-The existence of a schema does not mean it is frozen. Agent, Job, compute, payment, capability, memory, and verification objects need canonical vectors and implementation experience before declaring the entire object family stable.
+The existence of a schema does not mean it is frozen. Agent, AgentManifest, ExecutionReceipt, Job, compute, payment, capability, memory, privacy, succession, and verification objects need canonical vectors, threat analysis, and implementation experience before declaring the entire object family stable.
 
 ## Documentation model
 
@@ -201,7 +245,7 @@ Before a public devnet/testnet milestone, prioritize:
 - observable failures,
 - and CI that is green.
 
-Advanced AI scheduling, markets, reputation, verification, and economics can evolve behind versioned protocol objects once the chain foundation is dependable.
+Advanced AI scheduling, markets, reputation, verification, privacy, succession, and economics can evolve behind versioned protocol objects once the chain foundation is dependable.
 
 ## What a new chat should do next
 
@@ -229,6 +273,8 @@ Start here:
 - `docs/protocol-architecture-v1.md` — architecture
 - `docs/design-doctrine.md` — design constraints
 - `docs/threat-model.md` — security model
+- `spec/agent-manifest-v1.md` — candidate portable agent environment
+- `spec/execution-receipt-v1.md` — candidate auditable machine-work receipt
 - `spec/network-parameters-v1.md` — network parameters
 - `spec/block-header-v1.md` — block header
 - `spec/randomx-pow-v1.md` — current RandomX consensus candidate
