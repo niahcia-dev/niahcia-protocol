@@ -1,174 +1,244 @@
-# NIAHCIA Native Transaction V1
+# Native Transaction V1
 
 ## Status
 
-**CANDIDATE / interoperability design**
+Candidate — Protocol V1 foundation.
 
-This specification defines the canonical NIAHCIA V1 signed transaction
-envelope.
+This specification defines the canonical NIAHCIA native transaction format,
+authentication rules, transaction identity, action semantics, and deterministic
+state-transition boundary.
 
-NIAHCIA owns transaction identity, native signing-domain separation,
-network/chain replay protection, canonical transaction bytes, transaction
-ordering, and the consensus commitment to those bytes.
+It does not define the contract runtime instruction set. Contract runtime
+semantics are versioned separately.
 
-The execution engine owns EVM execution semantics and execution state.
+## Design principles
 
-## Design boundary
+Native transactions:
 
-A `NativeTransactionV1` is not an Ethereum raw transaction and its identifier
-is not an Ethereum transaction hash.
-
-A native transaction may request execution whose effects are performed by the
-EVM execution engine, but execution-layer conventions MUST NOT silently
-redefine the canonical NIAHCIA transaction.
-
-NIAHCIA consensus validates the resulting execution commitment according to
-the applicable block/execution protocol.
+- are canonical NIAHCIA protocol objects;
+- use NCE/1 serialization;
+- authenticate an exact canonical unsigned body;
+- identify the sender cryptographically rather than through a claimed sender
+  field;
+- commit to the native network and chain;
+- use native Account and Contract Address V1 payloads;
+- have deterministic replay and nonce rules;
+- do not depend on another blockchain transaction format or state model.
 
 ## Native transaction body
 
-The canonical unsigned body is an NCE/1 object with permanent object type
-`0x0010` (`NativeTransactionBody`) and schema version `1`.
+The canonical unsigned transaction is:
 
-The NCE/1 envelope carries `schema_version = 1`.
+    object_type    = 0x0010
+    schema_version = 1
 
-The NCE/1 payload fields are:
+Its NCE/1 payload fields are permanently assigned:
 
     1   network_id
     2   chain_id
     3   nonce
-    4   to_kind
-    5   to_payload
+    4   action
+    5   target_payload
     6   value
     7   gas_limit
     8   max_fee_per_gas
     9   data
 
-`network_id`, `chain_id`, `nonce`, `to_kind`, and `gas_limit` use canonical
+The envelope carries `schema_version = 1`; schema version is not duplicated in
+the payload.
+
+`network_id`, `chain_id`, `nonce`, `action`, and `gas_limit` use canonical
 NCE/1 unsigned-integer encoding.
 
-`to_payload` is a CBOR byte string of exactly 20 bytes.
+`target_payload` and `data` use definite-length CBOR byte strings.
 
 `value` and `max_fee_per_gas` are integer `aniah` quantities represented as
-exactly 16 unsigned big-endian bytes inside NCE/1 CBOR byte strings, consistent
-with Monetary and Fee Primitives V1.
+exactly 16 unsigned big-endian bytes inside NCE/1 CBOR byte strings.
 
-`data` is a definite-length CBOR byte string. Its length is encoded by the
-canonical CBOR byte-string representation; no separate `data_length` field is
-serialized.
+## Actions
 
-The NCE/1 envelope `schema_version` MUST equal `1`.
+V1 defines:
 
-`network_id` and `chain_id` MUST match the configured NIAHCIA network.
+    0x00  Transfer
+    0x01  ContractCall
+    0x02  ContractCreate
 
-## Recipient
+All other action values are invalid in V1.
 
-`to_kind` uses the Address V1 kind values:
+### Transfer
 
-    0x00 Account
-    0x01 Contract
+A Transfer moves native value to an Account.
 
-`to_payload` is exactly the 20-byte Address V1 payload.
+Requirements:
 
-The human-facing Bech32m HRP is not serialized into the transaction body.
-Network identity is committed independently through `network_id` and
-`chain_id`.
+- `target_payload` is exactly 20 bytes;
+- the target is interpreted as an Account Address V1 payload for the
+  transaction network;
+- `data` is empty.
 
-A node reconstructing a human-facing recipient MUST use the transaction's
-validated network and the specified address kind/payload.
+### ContractCall
 
-Unknown recipient kinds are invalid in V1.
+A ContractCall invokes an existing Contract.
+
+Requirements:
+
+- `target_payload` is exactly 20 bytes;
+- the target is interpreted as a Contract Address V1 payload for the
+  transaction network;
+- `data` contains the runtime input bytes and MAY be empty.
+
+The active versioned NIAHCIA contract-runtime specification defines runtime
+behavior.
+
+### ContractCreate
+
+A ContractCreate creates a new Contract.
+
+Requirements:
+
+- `target_payload` is empty;
+- `data` contains the contract-creation payload required by the active
+  versioned NIAHCIA contract-runtime specification.
+
+The resulting Contract Address V1 payload is derived according to Address V1.
+
+## Network and chain
+
+`network_id` identifies the NIAHCIA network.
+
+`chain_id` identifies the NIAHCIA chain within the signed transaction domain.
+
+Both MUST match the node's active consensus configuration.
+
+A transaction for another network or chain is invalid.
 
 ## Sender
 
-The sender is not independently serialized as an address in the unsigned
-transaction body.
+The unsigned body does not contain a sender field.
 
-The sender Account Address V1 payload is derived from the transaction's
-authenticated secp256k1 public key according to Address V1:
+The authenticated sender is derived from the canonical public key carried by
+SignedNativeTransactionV1 according to Address V1 account derivation.
 
-    public_key = 0x04 || X || Y
-    digest = Keccak-256(X || Y)
-    sender_payload = digest[12..32]
+An implementation MUST NOT accept an independently supplied sender identity as
+a substitute for the authenticated sender.
 
-This prevents a transaction from carrying an independently claimed sender
-that disagrees with its cryptographic signer.
+## Account nonce
 
-## Account transaction nonce
+Every Account has a monotonically increasing native transaction nonce.
 
-Each Account has a monotonically increasing native transaction nonce.
+For admission to execution:
 
-For ordinary V1 transaction execution:
-
-    tx.nonce == current_sender_transaction_nonce
+    tx.nonce == current_sender_nonce
 
 is required.
 
-A stale nonce is invalid.
+A transaction with a stale or future nonce is not executable in the current
+state.
 
-A future nonce is not executable until all preceding sender nonces have been
-satisfied. Mempool policy for retaining future-nonce transactions is an
-implementation concern unless separately specified.
+Once a transaction passes pre-execution validation and enters execution, its
+sender nonce is consumed exactly once.
 
-The native account transaction nonce is distinct from:
+Therefore:
 
-- registry nonces;
-- object-creation nonces;
-- Job nonces;
-- Agent intent identifiers;
-- storage/service protocol nonces;
-- EVM contract-creation nonce semantics.
+- pre-execution invalid transaction: nonce is not consumed;
+- successful transaction: nonce is consumed;
+- accepted ContractCall or ContractCreate that fails during runtime execution:
+  nonce is consumed;
+- accepted transaction that exhausts its permitted gas: nonce is consumed.
 
-Exact nonce consumption on successful execution, failed execution, and EVM
-revert MUST be locked together with the execution-transition rules before V1
-is production-final.
+The nonce transition is checked for overflow.
 
-## Signed transaction envelope
+Registry, object, job, storage, service, and other protocol nonces are separate
+domains and MUST NOT be substituted for the native account transaction nonce.
 
-The canonical signed envelope is:
+## Value
 
-    SignedNativeTransactionV1
-    - body: NativeTransactionBodyV1
-    - public_key: bytes65
-    - signature: bytes64
+`value` is denominated in integer `aniah`.
 
-`public_key` MUST be canonical uncompressed SEC1:
+No floating-point representation is consensus-valid.
+
+All balance arithmetic MUST use checked integer arithmetic.
+
+For Transfer, `value` is the amount transferred to the target Account.
+
+For ContractCall and ContractCreate, `value` is the native value made available
+to that operation according to the active contract-runtime rules.
+
+## Gas and fees
+
+`gas_limit` is the maximum execution gas authorized by the sender.
+
+`max_fee_per_gas` is an integer `aniah` quantity.
+
+The maximum authorized execution charge is:
+
+    gas_limit * max_fee_per_gas
+
+using checked arithmetic.
+
+A transaction that cannot cover its required value and maximum authorized
+execution charge is invalid before execution.
+
+Actual fee calculation and fee disposition are defined by the active
+versioned monetary and fee policy.
+
+Transfer remains subject to the consensus-defined native transaction cost even
+though it does not invoke the contract runtime.
+
+## Data
+
+`data` is a definite-length byte string.
+
+Its interpretation is action-dependent:
+
+- Transfer: MUST be empty;
+- ContractCall: runtime input bytes;
+- ContractCreate: contract-creation payload.
+
+No independent data-length field is serialized.
+
+## Signed transaction
+
+The canonical signed transaction is:
+
+    object_type    = 0x0011
+    schema_version = 1
+
+Its NCE/1 payload fields are:
+
+    1   body
+    2   public_key
+    3   signature
+
+`body` is a CBOR byte string containing the complete canonical NCE/1
+serialization of NativeTransactionBodyV1, including its NCE/1 envelope.
+
+Those exact body bytes are authenticated by the signature.
+
+`public_key` is exactly 65 bytes and MUST be canonical uncompressed SEC1:
 
     0x04 || X || Y
 
-and MUST encode a valid secp256k1 public key.
+The key MUST encode a valid secp256k1 public key.
 
-`body` is a CBOR byte string containing the complete canonical NCE/1 bytes of
-NativeTransactionBodyV1, including its top-level NCE/1 envelope.
-
-The embedded body bytes MUST be exactly the same bytes used as
-`canonical_unsigned_body` when computing the signing digest. An implementation
-MUST NOT substitute a different serialization of the body inside
-SignedNativeTransactionV1.
-
-`public_key` is a CBOR byte string of exactly 65 bytes.
-
-`signature` is the canonical fixed-width secp256k1 ECDSA representation:
+`signature` is exactly 64 bytes:
 
     r || s
 
-where both `r` and `s` are exactly 32-byte unsigned big-endian integers.
+where `r` and `s` are 32-byte unsigned big-endian integers.
 
-High-S signatures MUST be rejected. V1 accepts only canonical low-S ECDSA
-signatures.
+V1 requires valid ranges and canonical low-S form.
 
-DER encoding is not part of the canonical V1 transaction format.
+DER encoding and a recovery identifier are not part of
+SignedNativeTransactionV1.
 
 ## Signing digest
 
-The signature authenticates the complete canonical unsigned transaction body
-using the protocol-wide signing-domain construction.
+The signing purpose is:
 
-For Native Transaction V1:
+    SIGN/NATIVE_TRANSACTION
 
-    signing_purpose = "SIGN/NATIVE_TRANSACTION"
-
-and:
+The digest is:
 
     signing_digest =
       Keccak-256(
@@ -181,201 +251,194 @@ and:
         canonical_unsigned_body
       )
 
-The quoted domain strings are literal ASCII bytes.
-
-`network_id` in the outer signing domain is the same validated network ID
-encoded inside `canonical_unsigned_body`. A mismatch is invalid.
-
-The explicit outer network domain is intentional even though the body also
-contains `network_id` and `chain_id`: the outer value provides protocol-level
-signing-domain separation while the canonical body independently commits to
-the transaction's network and chain semantics.
-
 `canonical_unsigned_body` is the complete canonical NCE/1 serialization of
-NativeTransactionBody V1, including the top-level NCE/1 envelope with object
-type `0x0010`.
+NativeTransactionBodyV1.
 
-The signature MUST verify against `signing_digest` and the serialized public
-key.
-
-## Canonical signed bytes
-
-The canonical raw transaction bytes are the canonical serialization of:
-
-    SignedNativeTransactionV1
-
-No JSON, hexadecimal text, Bech32m text, DER signature, execution-engine
-transaction encoding, or RPC representation is canonical transaction
-serialization.
-
-Canonical serialization MUST be deterministic and uniquely decodable.
+The `network_id` committed by the signing domain MUST equal the `network_id`
+inside the body.
 
 ## Transaction identifier
 
-The native transaction identifier is:
+The canonical transaction identifier is derived from the complete canonical
+SignedNativeTransactionV1 bytes:
 
     tx_id =
       Keccak-256(
         "NIAHCIA/TX-ID/V1" ||
-        canonical_signed_transaction_bytes
+        0x00 ||
+        canonical_signed_transaction
       )
 
-`tx_id` is a 32-byte native protocol identifier.
+The transaction identifier is a protocol identifier and is not a sender nonce,
+block position, or mutable database identifier.
 
-Default display form:
+## Transaction commitment
 
-    0x<64 lowercase hexadecimal characters>
+Blocks commit to ordered native transactions using the canonical transaction
+commitment defined by Transaction Merkle V1.
 
-An execution-engine transaction/block identifier MUST NOT substitute for
-`tx_id`.
+The commitment MUST authenticate transaction order and exact canonical signed
+transaction bytes.
 
-## Block transaction commitment
+## Pre-execution validation
 
-The exact same `canonical_signed_transaction_bytes` are supplied as `tx` to
-the Transaction Merkle Tree V1 rules.
+Before a transaction may enter execution, a node MUST validate at least:
 
-Therefore:
+1. canonical NCE/1 envelope and payload encoding;
+2. object type and schema version;
+3. recognized network and matching active network;
+4. matching native chain ID;
+5. recognized action;
+6. action-specific target rules;
+7. canonical public key;
+8. canonical low-S signature;
+9. signature over the exact canonical body;
+10. authenticated sender derivation;
+11. exact current sender nonce;
+12. checked monetary arithmetic;
+13. sufficient sender balance for the required value and maximum authorized
+    execution charge;
+14. consensus size and gas limits.
 
-    tx_digest =
-      Keccak-256(
-        "NIAHCIA/TX/V1" ||
-        canonical_signed_transaction_bytes
-      )
+Failure of pre-execution validation makes the transaction invalid and consumes
+neither nonce nor fee.
 
-and `tx_id` remain deliberately domain-separated commitments.
+## Deterministic state transition
 
-## Value and maximum fee reserve
+A valid transaction enters deterministic native execution.
 
-Before execution, checked integer arithmetic computes:
+### Transfer success
 
-    max_fee_reserve =
-        gas_limit * max_fee_per_gas
+A successful Transfer:
 
-    required_balance =
-        value + max_fee_reserve
+1. consumes the sender nonce;
+2. debits the transferred value and charged fee from the sender;
+3. credits the transferred value to the target Account;
+4. applies the versioned fee disposition;
+5. commits the resulting state.
 
-The sender MUST have at least `required_balance` available according to the
-authoritative pre-state.
+### Contract success
 
-Overflow is invalid.
+A successful ContractCall or ContractCreate:
 
-## Execution request
+1. consumes the sender nonce;
+2. applies the deterministic contract-runtime transition;
+3. applies native value movement required by that transition;
+4. charges the actual execution fee;
+5. applies the versioned fee disposition;
+6. commits the resulting state.
 
-The native transaction maps to an execution request containing at least:
+### Contract runtime failure
 
-- authenticated sender execution address;
-- recipient execution address;
-- value;
-- gas limit;
-- execution calldata.
+If an accepted ContractCall or ContractCreate fails during runtime execution:
 
-For an Account recipient with empty `data`, the ordinary intended operation is
-a value transfer.
+1. the sender nonce remains consumed;
+2. reversible contract state effects are discarded;
+3. reversible operation-value effects are discarded;
+4. the consensus-defined execution fee is charged;
+5. fee disposition is applied;
+6. the resulting failure state is committed.
 
-For a Contract recipient, `data` may contain EVM calldata.
+### Out of gas
 
-The exact deterministic native-value/execution-value conversion and
-fee/gas mapping MUST be specified before this candidate becomes locked.
+If execution exhausts `gas_limit`:
 
-NIAHCIA MUST NOT invent competing EVM CREATE or CREATE2 address derivation.
+1. the sender nonce remains consumed;
+2. reversible contract state and operation-value effects are discarded;
+3. the transaction is charged according to the full permitted gas consumption
+   rule;
+4. fee disposition is applied;
+5. the resulting failure state is committed.
 
-## Execution result
+All state arithmetic MUST be checked.
 
-The authoritative execution result provides the execution outcome and
-`gas_used`.
+## Contract creation
 
-It MUST satisfy:
+Contract creation is a native state transition initiated by
+`action = ContractCreate`.
 
-    gas_used <= gas_limit
+The transaction does not serialize a target contract address.
 
-The applicable fee rules determine:
+The resulting contract payload is derived deterministically from the
+authenticated sender, native network/chain context, and sender transaction
+nonce according to Address V1.
 
-    effective_fee_per_gas <= max_fee_per_gas
-
-and:
-
-    charged_fee =
-        gas_used * effective_fee_per_gas
-
-    unused_fee_reserve =
-        max_fee_reserve - charged_fee
-
-    sender_charge =
-        value + charged_fee
-
-All arithmetic is checked.
-
-The final disposition of fee components is governed by the applicable
-versioned economic policy and is not inferred from the execution engine.
-
-## Failure and revert boundary
-
-The following cases MUST be distinguished by the final V1 transition rules:
-
-1. transaction invalid before execution;
-2. transaction accepted for execution and succeeds;
-3. transaction accepted for execution but EVM execution reverts;
-4. transaction accepted for execution and exhausts its permitted gas;
-5. execution result inconsistent with the NIAHCIA transaction or block
-   commitment.
-
-Invalid-before-execution transactions MUST NOT become valid merely because an
-execution engine accepts some corresponding request.
-
-The exact nonce and fee consequences of cases 2-4 remain to be locked before
-production V1.
+Contract runtime installation and initialization are defined by the active
+versioned contract-runtime specification.
 
 ## Replay protection
 
-V1 replay protection includes at least:
+Replay protection is provided jointly by:
 
+- the signing domain;
 - `network_id`;
-- native `chain_id`;
-- sender-derived identity;
-- account transaction `nonce`;
-- signing-purpose domain separation.
+- `chain_id`;
+- the authenticated sender;
+- the exact sender transaction nonce;
+- canonical transaction identity.
 
-An execution chain ID does not replace the native NIAHCIA chain ID.
+A transaction valid on one native network or chain MUST NOT become valid on
+another merely because its body bytes are otherwise meaningful there.
 
-## Required interoperability vectors
+## Consensus requirements
 
-Before this specification is LOCKED, vectors MUST cover at least:
+Consensus implementations MUST agree on:
 
-1. canonical unsigned-body serialization;
-2. signing digest;
-3. secp256k1 public-key validation;
-4. low-S signature acceptance;
-5. high-S signature rejection;
-6. signature mismatch rejection;
-7. sender Account derivation;
-8. mainnet/testnet/devnet replay separation;
-9. wrong native chain-ID rejection;
-10. nonce validation;
-11. Account-to-Account zero-data transfer;
-12. Account-to-Contract calldata transaction;
-13. zero-value transaction;
-14. maximum valid `u128` field serialization;
-15. fee-reserve multiplication overflow;
-16. required-balance addition overflow;
-17. insufficient-balance rejection;
-18. transaction ID;
-19. Transaction Merkle leaf compatibility;
-20. malformed/truncated transaction rejection;
-21. unknown schema-version rejection;
-22. unknown recipient-kind rejection.
+- canonical NCE/1 encoding;
+- signing digest;
+- sender derivation;
+- transaction identifier;
+- action validation;
+- target interpretation;
+- nonce validation and consumption;
+- checked monetary arithmetic;
+- fee arithmetic;
+- deterministic native state transition;
+- transaction commitment;
+- contract-address derivation;
+- active contract-runtime version.
 
-## Open items before lock
+Any disagreement in these rules is consensus-critical.
 
-The following remain intentionally unresolved:
+## V1 exclusions
 
-- exact native-value to execution-value conversion;
-- execution gas-price/base-fee mapping;
-- nonce consumption on EVM revert/out-of-gas;
-- contract-creation transaction representation;
-- transaction expiry/deadline, if any;
-- access-list/blob or future execution transaction features;
-- production EVM chain IDs;
-- final fee disposition policy.
+Native Transaction V1 does not define:
 
-These items require explicit review rather than silent inheritance from
-Ethereum or Reth behavior.
+- the contract-runtime instruction set;
+- contract-runtime memory/storage representation;
+- the detailed runtime gas schedule;
+- future transaction actions;
+- transaction expiry/deadline;
+- access-list-style extensions;
+- blob/data-availability extensions.
+
+Those require separately versioned protocol specifications.
+
+## Interoperability lock requirements
+
+Before Native Transaction V1 is declared interoperability-locked, canonical
+vectors MUST cover at least:
+
+1. one Transfer body;
+2. one ContractCall body;
+3. one ContractCreate body;
+4. signing digest;
+5. canonical public key;
+6. canonical low-S signature;
+7. SignedNativeTransactionV1 bytes;
+8. transaction identifier;
+9. sender Address V1 derivation;
+10. ContractCreate Address V1 derivation;
+11. wrong-network rejection;
+12. wrong-chain rejection;
+13. invalid action rejection;
+14. invalid target-length rejection;
+15. stale/future nonce rejection;
+16. insufficient-balance rejection;
+17. checked-overflow rejection;
+18. high-S signature rejection;
+19. malformed public-key rejection;
+20. malformed NCE/1 rejection.
+
+Until those vectors and the dependent native state-transition rules are locked,
+this specification remains Candidate.

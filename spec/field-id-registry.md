@@ -461,8 +461,8 @@ Exclusion is a preimage rule, not a renumbering rule.
 1   network_id
 2   chain_id
 3   nonce
-4   to_kind
-5   to_payload
+4   action
+5   target_payload
 6   value
 7   gas_limit
 8   max_fee_per_gas

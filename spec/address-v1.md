@@ -60,36 +60,77 @@ account-derivation procedure.
 
 ## Contract addresses
 
-A V1 Contract address contains the 20-byte execution-layer contract address
-produced by the EVM.
+A V1 Contract uses kind:
 
-The native address container encodes:
+    0x01
+
+and has a native deterministic 20-byte contract payload.
+
+The native address container is:
 
     0x01 || 0x01 || contract_payload_20
 
-where `contract_payload_20` is exactly the 20-byte contract address produced
-by the authoritative EVM execution result.
+encoded with Bech32m and the HRP for the selected network.
 
-NIAHCIA MUST NOT define a competing contract-creation nonce or independently
-reinterpret EVM contract-address derivation.
+## Contract payload derivation
 
-For ordinary EVM `CREATE`, the creator and execution-state nonce semantics are
-owned by the EVM execution protocol.
+A ContractCreate transaction derives its contract payload from the
+authenticated creator and native transaction context.
 
-For EVM `CREATE2`, the deployer, salt, and initialization-code hash semantics
-are likewise owned by the EVM execution protocol.
+Define:
 
-Reth is the current NIAHCIA execution engine and is authoritative for execution
-state and execution results. NIAHCIA consensus determines canonical ordering
-and validates the committed execution result; it does not replace EVM
-contract-creation semantics.
+    contract_digest =
+        Keccak-256(
+            "NIAHCIA/CONTRACT/V1" ||
+            0x00 ||
+            network_id ||
+            0x00 ||
+            chain_id_u64_be ||
+            0x00 ||
+            creator_payload_20 ||
+            0x00 ||
+            creator_nonce_u64_be
+        )
 
-After execution determines the 20-byte contract address, NIAHCIA presents that
-same payload through its typed, network-aware Bech32m Address V1 container.
+    contract_payload_20 = contract_digest[12..32]
 
-A NIAHCIA registry nonce, object creation nonce, job nonce, or other
-protocol-object nonce MUST NOT be substituted for the EVM account nonce used
-by EVM contract creation.
+The inputs are exact:
+
+- `"NIAHCIA/CONTRACT/V1"` is the literal ASCII byte sequence;
+- each shown `0x00` is exactly one zero byte;
+- `network_id` is the canonical network identifier byte sequence defined by
+  Network Parameters V1;
+- `chain_id_u64_be` is exactly 8 bytes, unsigned big-endian;
+- `creator_payload_20` is exactly the authenticated 20-byte Account Address V1
+  payload of the transaction sender;
+- `creator_nonce_u64_be` is exactly 8 bytes, unsigned big-endian, containing
+  the ContractCreate transaction sender nonce.
+
+The Bech32m address text is never part of the derivation input.
+
+The resulting Contract Address V1 is obtained by encoding:
+
+    0x01 || 0x01 || contract_payload_20
+
+with the HRP for the transaction network.
+
+Contract derivation is therefore separated by network, chain, authenticated
+creator, and creator transaction nonce.
+
+Registry nonces, object nonces, job nonces, storage nonces, service nonces, and
+other protocol nonce domains MUST NOT be substituted for the native account
+transaction nonce.
+
+## ContractCreate relationship
+
+Native Transaction V1 ContractCreate serializes no target contract payload.
+
+The contract payload is derived before contract initialization using this
+specification.
+
+Derivation of an address does not itself create persistent contract state.
+Persistent state exists only when the native state-transition and active
+contract-runtime rules commit the creation successfully.
 
 ## Validation
 
@@ -103,20 +144,40 @@ A V1 decoder rejects:
 6. network mismatch where a network is required;
 7. kind mismatch where a kind is required.
 
-Malformed native addresses must not be silently reinterpreted as hexadecimal or another network's address.
+Malformed native addresses MUST NOT be silently reinterpreted as hexadecimal
+or as another network address.
 
-## Execution boundary
+## Native fee recipients
 
-The 20-byte payload permits an internal execution-layer address mapping. That mapping does not replace the native NIAHCIA string as the canonical user-facing representation.
+A native mining fee recipient is an Account Address V1 for the selected
+network.
 
-A native mining fee recipient is an Account address for the selected network. The node may decode its 20-byte payload for the Reth Engine API internally.
-
-Legacy hexadecimal configuration is an implementation migration facility and is not part of the canonical native Address V1 representation.
+Consensus configuration and user-facing configuration SHOULD use canonical
+Address V1 text.
 
 ## Interoperability vectors
 
-The reference implementation currently carries byte-for-byte vectors for all six network/kind combinations. The protocol vector suite should mirror these fixtures so independent implementations do not need to treat Rust source code as the long-term vector authority.
+The existing locked Address V1 container and Account derivation vectors remain
+unchanged.
+
+Before native ContractCreate derivation is interoperability-locked, canonical
+vectors MUST additionally cover:
+
+1. the complete contract-derivation preimage;
+2. the 32-byte contract digest;
+3. the resulting 20-byte contract payload;
+4. the resulting Bech32m Contract Address V1;
+5. mainnet, testnet, and devnet;
+6. multiple creator payloads;
+7. multiple creator nonces;
+8. multiple native chain IDs.
 
 ## Compatibility rule
 
-An already-defined V1 address must never be reinterpreted. Changes to payload length, kind semantics, derivation semantics, checksum/encoding, or network meaning require a new version or explicitly versioned transition.
+An already-defined V1 address MUST never be silently reinterpreted.
+
+Changes to payload length, kind semantics, Account derivation, Contract
+derivation, checksum encoding, or network meaning require an explicitly
+versioned protocol transition.
+
+The locked Address V1 container and Account derivation remain unchanged.
