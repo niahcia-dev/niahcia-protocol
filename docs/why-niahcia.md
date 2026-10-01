@@ -71,6 +71,7 @@ The protocol reserves explicit concepts for:
 
 - `Agent`
 - `AgentVersion`
+- `AgentManifestV1`
 - `Model`
 - `ExecutionProfile`
 - `ComputeWorker`
@@ -82,12 +83,45 @@ The protocol reserves explicit concepts for:
 - `MemoryDescriptor`
 - `PaymentPlan`
 - `ResultCommitment`
+- `ExecutionReceiptV1`
 
-This makes it possible to reason about agent ownership, upgrades, permissions, tools, memory, model selection, compute execution, verification, payments, and delegation as versioned protocol relationships rather than hidden application behavior.
+This makes it possible to reason about agent ownership, upgrades, permissions, tools, memory, model selection, compute execution, verification, payments, delegation, portability, and execution history as versioned protocol relationships rather than hidden application behavior.
 
 The intended end state is that an agent can survive the disappearance of the original frontend or execution host because its identity and authorized relationships are not owned by that frontend.
 
-## 4. Compute should be replaceable
+## 4. Agent sovereignty means portable authority and state
+
+A decentralized agent should not become property of whichever server currently runs its inference process.
+
+NIAHCIA is therefore developing `AgentManifestV1` as a portable integrity-verifiable description of an agent's authorized environment. It binds an exact AgentVersion to model/execution policy, capabilities, memory descriptors, payment policy, privacy policy, succession policy, storage manifests, and lineage commitments.
+
+The intended portability invariant is that an independent compatible host can resolve the same authorized execution environment from the same manifest and referenced canonical content without inheriting ownership of the agent.
+
+That means the physical GPU becomes a replaceable execution resource rather than the agent's identity.
+
+Portable memory does not mean making private memory public. Memory can remain encrypted, access-controlled, content-addressed, or distributed while the manifest commits to the authorized descriptors and integrity roots.
+
+## 5. Agent lineage and succession should be verifiable
+
+`AgentVersion` already forms an immutable append-only execution history. `AgentManifestV1` extends the portability model with an explicit lineage commitment so a host or requester can verify which authorized version and policies it is executing.
+
+NIAHCIA also reserves a succession-policy commitment. The purpose is to make creator/controller disappearance a protocol-defined event rather than an emergency handled by whichever server happens to possess a copy.
+
+Concrete succession state machines are not yet locked. Candidate future policies may include immutable/no succession, designated successors, contract governance, threshold governance, time-delayed succession, or deliberate dormancy.
+
+An execution host must never gain the right to seize an agent merely because the previous controller or host disappeared.
+
+## 6. Capability-native security should constrain agents and hosts
+
+An agent with a treasury should not need to hand every inference host unrestricted wallet authority.
+
+NIAHCIA's capability model is intended to support least-privilege execution: permitted tools/services, destinations/contracts, budgets, expiration, delegation limits, model/profile access, memory/storage access, rate limits, and revocation can be committed as explicit authority.
+
+The goal is that compromising one worker does not automatically compromise the agent's complete identity or economic authority.
+
+This is especially important for autonomous agents that may purchase compute, storage, verification, or services without a human approving every individual request.
+
+## 7. Compute should be replaceable
 
 NIAHCIA does not intend to enshrine today's AI stack into permanent blockchain consensus.
 
@@ -101,7 +135,7 @@ If a new accelerator class appears, compute workers should be able to advertise 
 
 If one model disappears, an agent should be able to move to an authorized replacement according to its version/policy rather than requiring a chain fork merely because an AI vendor or model changed.
 
-## 5. Verification is a protocol problem
+## 8. Verification is a protocol problem
 
 A worker signature proves who claimed to perform work. It does not prove the work was correct.
 
@@ -113,7 +147,27 @@ The earlier fixed Prototype-0 2-of-3 assumption has been superseded. Redundant e
 
 This leaves room for approaches such as deterministic re-execution, sampled auditing, optimistic challenge systems, trusted-execution evidence, specialized proofs, or future techniques where their security properties justify them.
 
-## 6. Storage should be reconstructable, not hosted
+## 9. Execution receipts make machine work auditable
+
+NIAHCIA is developing `ExecutionReceiptV1` as a privacy-aware canonical record that can bind a Job to the exact AgentVersion/manifest, model, execution profile, worker, result commitment, verification policy/evidence, resource accounting, and settlement outcome.
+
+The receipt is evidence rather than correctness by declaration. Verification remains controlled by the referenced VerificationPolicy and canonical protocol state.
+
+Private prompts, results, or memory do not need to be published merely to create an audit trail. The receipt can commit to private material while revealing only the protocol relationships required for independent verification.
+
+This gives agents and users a verifiable history of machine work without requiring one centralized logging or reputation service.
+
+## 10. Privacy should be a job/policy property
+
+Confidential execution should not be treated as a single global network switch.
+
+NIAHCIA's portability design reserves an explicit privacy-policy commitment so different work can eventually declare different requirements: for example public work, encrypted inputs, private results, protected memory, or attested confidential execution.
+
+Concrete privacy modes are not yet locked. The architectural requirement is that a worker unable to satisfy a job's declared privacy requirements must not be considered an equivalent execution host.
+
+This allows privacy mechanisms to evolve without hard-coding one TEE vendor or one cryptographic technique into PoW consensus.
+
+## 11. Storage should be reconstructable, not hosted
 
 A decentralized AI network is not meaningfully decentralized if its models, manifests, agent memory, or execution dependencies disappear when one project's server goes offline.
 
@@ -121,7 +175,7 @@ NIAHCIA's storage direction therefore favors content addressing, canonical manif
 
 The objective is not merely to duplicate files. It is to make protocol-relevant resources independently identifiable and verifiable so that another node can retrieve and reconstruct the same object without trusting the original host.
 
-## 7. The blockchain should survive AI failure
+## 12. The blockchain should survive AI failure
 
 One of the simplest tests of the architecture is failure isolation.
 
@@ -137,7 +191,7 @@ If the original developers disappear, the protocol should remain understandable 
 
 No single subsystem should secretly become the network's control plane.
 
-## 8. Native economics connect independent resource markets
+## 13. Native economics connect independent resource markets
 
 NIAHCIA distinguishes the economic roles performed by different participants:
 
@@ -151,9 +205,11 @@ Payment can connect these systems without equating them.
 
 A GPU worker can earn for useful compute without becoming a miner. A storage node can earn for availability without becoming a validator. A miner can secure the chain without running an LLM.
 
+The longer-term objective includes agent-to-agent service relationships: one agent should be able to discover a capability offered by another participant, fund a Job, obtain a committed/verifiable result, and settle according to protocol rules without either agent depending on the identity of the physical GPU that performed the work.
+
 This is intended to produce an economy of specialized decentralized resources rather than one monolithic node role.
 
-## 9. Smart contracts are part of the substrate
+## 14. Smart contracts are part of the substrate
 
 NIAHCIA integrates EVM execution through Reth rather than inventing a completely isolated contract environment.
 
@@ -161,7 +217,7 @@ The consensus daemon remains responsible for NIAHCIA chain ordering and PoW cons
 
 This allows autonomous agents and decentralized services to interact with programmable settlement while keeping NIAHCIA's native consensus identity separate from execution-engine implementation details.
 
-## 10. Common infrastructure should remain common where practical
+## 15. Common infrastructure should remain common where practical
 
 NIAHCIA should not fork mature ecosystem software merely to create artificial uniqueness.
 
@@ -174,7 +230,7 @@ Examples of this philosophy include:
 
 NIAHCIA should innovate where its protocol requires a new abstraction and reuse established infrastructure where established infrastructure already solves the problem safely.
 
-## 11. Decentralized scheduling should not become a hidden coordinator
+## 16. Decentralized scheduling should not become a hidden coordinator
 
 A network can advertise itself as decentralized while still depending on one scheduler to decide where every AI request goes.
 
@@ -182,7 +238,7 @@ NIAHCIA's compute architecture therefore treats worker discovery, eligibility, a
 
 The objective is not that every scheduling decision must be written directly into a block. The objective is that no permanent privileged scheduler becomes necessary for the system to function or impossible for independent participants to replace.
 
-## 12. Protocol-first interoperability
+## 17. Protocol-first interoperability
 
 NIAHCIA maintains a separate protocol repository because the Rust node should not become the only definition of the network.
 
@@ -202,6 +258,7 @@ NIAHCIA is not intended to be:
 - a single hosted AI API paid with cryptocurrency;
 - a fixed 2-of-3 inference voting system;
 - a blockchain permanently tied to one LLM, one runtime, one accelerator vendor, or one website;
+- a system where an inference host automatically owns the agent it executes;
 - a reason to fork mature software when interoperable standard software can safely be used.
 
 ## What success would look like
@@ -211,6 +268,7 @@ A mature NIAHCIA network should make the following flow possible without requiri
 ```text
 Agent A
    |
+   +-- resolves its portable authorized manifest/state
    +-- discovers Agent B / required capability
    +-- constructs and funds a Job
    v
@@ -219,6 +277,7 @@ eligible compute is discovered/selected
    v
 independent compute worker
    |
+   +-- verifies AgentVersion/manifest/capabilities
    +-- retrieves canonical model/profile/input
    +-- executes work
    +-- streams permitted output
@@ -228,13 +287,16 @@ VerificationPolicy
    |
    +-- accept / challenge / audit / reassign as specified
    v
-settlement
+ExecutionReceipt + settlement
    |
    +-- worker/verifier/service compensation
+   +-- auditable committed execution history
    +-- result becomes available to authorized participant(s)
 ```
 
 Meanwhile, CPU miners continue securing the chain independently and service/storage nodes continue preserving network resources independently.
+
+The agent can later execute on a different eligible host without changing its identity merely because the physical machine changed.
 
 That composition—not any single AI model—is the core NIAHCIA idea.
 
@@ -242,7 +304,7 @@ That composition—not any single AI model—is the core NIAHCIA idea.
 
 NIAHCIA is pre-alpha.
 
-Several protocol primitives and test vectors exist, and the reference implementation is actively developing consensus, synchronization, Reth integration, storage/service primitives, identities, monetary representation, and related infrastructure. Other parts—especially mature autonomous-agent execution, decentralized scheduling, production AI verification, full economic policy, and public production networking—remain design and implementation work.
+Several protocol primitives and test vectors exist, and the reference implementation is actively developing consensus, synchronization, Reth integration, storage/service primitives, identities, monetary representation, and related infrastructure. `AgentManifestV1` and `ExecutionReceiptV1` are currently candidate specifications, not implemented production guarantees. Other parts—especially mature autonomous-agent execution, decentralized scheduling, production AI verification/privacy, succession, full economic policy, and public production networking—remain design and implementation work.
 
 Accordingly, NIAHCIA's present differentiation is best described as an **architectural direction being implemented and tested**, not as a claim of production superiority over existing decentralized AI networks.
 
@@ -250,8 +312,8 @@ Accordingly, NIAHCIA's present differentiation is best described as an **archite
 
 When considering a future feature, ask:
 
-> Does this make NIAHCIA more independently operable, verifiable, replaceable, and permissionless—or does it quietly create a new central dependency?
+> Does this make NIAHCIA more independently operable, verifiable, replaceable, portable, least-privileged, and permissionless—or does it quietly create a new central dependency?
 
-If a proposed AI provider, scheduler, storage host, website, validator group, model repository, or developer-controlled service becomes indispensable, the design should be reconsidered.
+If a proposed AI provider, scheduler, storage host, website, validator group, model repository, execution host, or developer-controlled service becomes indispensable, the design should be reconsidered.
 
 The objective is not decentralization as branding. The objective is a network whose important roles can actually be replaced by independent participants.
