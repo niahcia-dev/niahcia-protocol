@@ -60,15 +60,36 @@ account-derivation procedure.
 
 ## Contract addresses
 
-A V1 Contract encodes:
+A V1 Contract address contains the 20-byte execution-layer contract address
+produced by the EVM.
 
-```text
-0x01 || 0x01 || contract_payload_20
-```
+The native address container encodes:
 
-using Bech32m and the network HRP.
+    0x01 || 0x01 || contract_payload_20
 
-Deterministic derivation of `contract_payload_20` belongs to the contract-creation protocol. This container specification does not invent that derivation.
+where `contract_payload_20` is exactly the 20-byte contract address produced
+by the authoritative EVM execution result.
+
+NIAHCIA MUST NOT define a competing contract-creation nonce or independently
+reinterpret EVM contract-address derivation.
+
+For ordinary EVM `CREATE`, the creator and execution-state nonce semantics are
+owned by the EVM execution protocol.
+
+For EVM `CREATE2`, the deployer, salt, and initialization-code hash semantics
+are likewise owned by the EVM execution protocol.
+
+Reth is the current NIAHCIA execution engine and is authoritative for execution
+state and execution results. NIAHCIA consensus determines canonical ordering
+and validates the committed execution result; it does not replace EVM
+contract-creation semantics.
+
+After execution determines the 20-byte contract address, NIAHCIA presents that
+same payload through its typed, network-aware Bech32m Address V1 container.
+
+A NIAHCIA registry nonce, object creation nonce, job nonce, or other
+protocol-object nonce MUST NOT be substituted for the EVM account nonce used
+by EVM contract creation.
 
 ## Validation
 
