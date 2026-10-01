@@ -31,6 +31,8 @@ The rationale behind this composition is documented in `docs/why-niahcia.md`. Th
 
 A newly explicit differentiation objective is **portable agent sovereignty**: an agent's identity, authorized state, capabilities, economic relationships, lineage, and execution history should remain protocol-resolvable independently of whichever physical host currently executes it.
 
+A corresponding storage objective is **economically maintained, self-healing persistence**: agents and publishers should eventually be able to fund explicit durability obligations while independent providers repair lost replicas from surviving canonical content without a permanent storage coordinator.
+
 ## Fundamental architecture rules
 
 These decisions should be treated as architectural invariants unless deliberately revisited:
@@ -58,6 +60,8 @@ Verification is policy-driven through `VerificationPolicy`; individual workloads
 ### Service nodes
 
 Proof-of-service is payment/reward evidence, not chain work. Service-node status must never create fork-choice authority.
+
+Storage providers may store ciphertext and prove possession/availability without receiving decryption, agent governance, treasury, capability, or succession authority.
 
 ### Canonical protocol data
 
@@ -109,16 +113,7 @@ Two new **CANDIDATE** protocol surfaces have been added. They are intentionally 
 
 ### AgentManifestV1
 
-`spec/agent-manifest-v1.md` defines the candidate portability contract binding an exact AgentVersion to:
-
-- lineage;
-- model/execution policy;
-- capabilities;
-- memory descriptors;
-- payment policy;
-- privacy policy;
-- succession policy;
-- storage manifests.
+`spec/agent-manifest-v1.md` defines the candidate portability contract binding an exact AgentVersion to lineage, model/execution policy, capabilities, memory descriptors, payment policy, privacy policy, succession policy, and storage manifests.
 
 Goal: a compatible independent host can resolve the same authorized execution environment without becoming the owner of the agent. Private memory may remain encrypted/access-controlled; portability does not imply public disclosure.
 
@@ -130,30 +125,60 @@ Goal: create an independently auditable history of machine work without requirin
 
 ### Still deliberately open
 
-Do not prematurely lock:
-
-- succession state-machine semantics;
-- concrete privacy policy classes;
-- host scheduling/selection;
-- reputation/ranking;
-- receipt inclusion/on-chain commitment mechanism;
-- one TEE/privacy vendor;
-- deterministic-output requirements for all AI jobs.
+Do not prematurely lock succession state-machine semantics, concrete privacy policy classes, host scheduling/selection, reputation/ranking, receipt inclusion/on-chain commitment mechanism, one TEE/privacy vendor, or deterministic-output requirements for all AI jobs.
 
 These candidates need NCE/1 field/type/domain allocation, canonical vectors, threat review, and implementation experience before freeze.
 
+## New storage durability candidates
+
+Two additional **CANDIDATE** protocol surfaces now describe the missing layer above storage challenges/proofs.
+
+### StorageAgreementV1
+
+`spec/storage-agreement-v1.md` expresses that an exact content-addressed object should remain available for a defined duration with a target/minimum provider level, storage profile, challenge/retrieval policy, payment plan/budget, privacy policy, renewal policy, and recovery policy.
+
+It separates **why/how long content should remain stored** from the lower-level proofs that a provider possesses/serves it.
+
+Initial implementation direction is straightforward chunked replication. Erasure coding is a future versioned storage profile rather than a pre-alpha requirement.
+
+An autonomous agent may eventually fund renewal of its own model/memory persistence through these mechanisms without giving a storage provider control of the agent treasury.
+
+### StorageHealthV1
+
+`spec/storage-health-v1.md` defines the candidate observational lifecycle:
+
+```text
+HEALTHY -> DEGRADED -> AT_RISK -> RECOVERING -> HEALTHY
+                              -> UNAVAILABLE
+EXPIRED
+```
+
+Health is derived service state, **not chain finality**. Recovery should be permissionless: an eligible provider can discover an under-replicated exact object, retrieve surviving canonical chunks, verify/reconstruct it, begin serving it, and restore durability without permission from a failed provider or the original publisher.
+
+Before deterministic observation windows/evidence rules are locked, implementations may expose health only as non-authoritative telemetry.
+
+Implementation follow-up is tracked in `niahcia/niahcia#27`: implement a non-consensus storage-health telemetry scaffold only after current CI is green. No reward, fork-choice, settlement, or consensus changes are authorized by that issue.
+
+### Storage work deliberately left open
+
+Do not yet lock:
+
+- exact storage pricing/rewards;
+- provider independence/Sybil scoring;
+- automatic renewal semantics;
+- encryption/key distribution;
+- erasure-coding parameters;
+- repair-provider selection;
+- geographic placement;
+- health observation windows/hysteresis;
+- compensable bandwidth accounting;
+- consensus inclusion/commitment of agreements.
+
+These need threat modeling, canonical vectors, and devnet evidence.
+
 ## Native addresses
 
-Address V1 is locked for pre-alpha interoperability:
-
-- Bech32m
-- version byte `0x01`
-- 22-byte decoded payload: version + kind + 20-byte payload
-- Account kind `0x00`
-- Contract kind `0x01`
-- Mainnet HRP: `niah`
-- Testnet HRP: `tniah`
-- Devnet HRP: `dniah`
+Address V1 is locked for pre-alpha interoperability: Bech32m, version byte `0x01`, 22-byte decoded payload (version + kind + 20-byte payload), Account kind `0x00`, Contract kind `0x01`, and HRPs `niah` / `tniah` / `dniah`.
 
 Native addresses are the intended user-facing format. Reth's underlying 20-byte execution address is an internal interoperability representation.
 
@@ -195,8 +220,9 @@ While implementation CI/blockers are unresolved, prefer specification/vector cle
 2. Add denomination/value/fee arithmetic vectors.
 3. Audit and remove stale Prototype-0 language, especially old fixed 2-of-3 assumptions.
 4. Cross-check NCE/1 serialization, field IDs, object type IDs, domain separation, signature preimages, and storage vectors for consistency.
-5. Design/review AgentManifestV1 and ExecutionReceiptV1 only at the protocol level; do not force them into consensus implementation while CI is red.
-6. Ensure implementation docs and `niahcia-protocol` remain synchronized.
+5. Review AgentManifestV1, ExecutionReceiptV1, StorageAgreementV1, and StorageHealthV1 at the protocol level; do not force them into consensus implementation while CI is red.
+6. Define canonical IDs/fields/domains and test vectors for candidates before implementation activation.
+7. Ensure implementation docs and `niahcia-protocol` remain synchronized.
 
 ### Consensus work that needs deliberate review
 
@@ -208,7 +234,7 @@ While implementation CI/blockers are unresolved, prefer specification/vector cle
 
 ### Protocol work still needing maturity
 
-The existence of a schema does not mean it is frozen. Agent, AgentManifest, ExecutionReceipt, Job, compute, payment, capability, memory, privacy, succession, and verification objects need canonical vectors, threat analysis, and implementation experience before declaring the entire object family stable.
+The existence of a schema does not mean it is frozen. Agent, AgentManifest, ExecutionReceipt, Job, compute, payment, capability, memory, privacy, succession, verification, StorageAgreement, and StorageHealth objects need canonical vectors, threat analysis, and implementation experience before declaring the entire object family stable.
 
 ## Documentation model
 
@@ -234,18 +260,9 @@ The implementation repository should conform to it. When experimentation proves 
 
 Prefer small, testable milestones over trying to implement the complete decentralized AI network at once.
 
-Before a public devnet/testnet milestone, prioritize:
+Before a public devnet/testnet milestone, prioritize deterministic consensus behavior, reproducible vectors, stable network identity, reliable node startup/sync, miner/pool interoperability, a clear execution-engine boundary, observable failures, and green CI.
 
-- deterministic consensus behavior,
-- reproducible vectors,
-- stable network identity,
-- reliable node startup/sync,
-- miner/pool interoperability,
-- clear execution-engine boundary,
-- observable failures,
-- and CI that is green.
-
-Advanced AI scheduling, markets, reputation, verification, privacy, succession, and economics can evolve behind versioned protocol objects once the chain foundation is dependable.
+Advanced AI scheduling, markets, reputation, verification, privacy, succession, storage economics, and economics can evolve behind versioned protocol objects once the chain foundation is dependable.
 
 ## What a new chat should do next
 
@@ -275,6 +292,8 @@ Start here:
 - `docs/threat-model.md` — security model
 - `spec/agent-manifest-v1.md` — candidate portable agent environment
 - `spec/execution-receipt-v1.md` — candidate auditable machine-work receipt
+- `spec/storage-agreement-v1.md` — candidate durability/economic storage agreement
+- `spec/storage-health-v1.md` — candidate storage health/recovery lifecycle
 - `spec/network-parameters-v1.md` — network parameters
 - `spec/block-header-v1.md` — block header
 - `spec/randomx-pow-v1.md` — current RandomX consensus candidate
