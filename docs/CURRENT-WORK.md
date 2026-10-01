@@ -1,195 +1,149 @@
 # NIAHCIA Current Work / Session Handoff
 
-**Purpose:** This is the first document a new development session should read. It is a concise handoff for current NIAHCIA state, decisions that must be preserved, unresolved work, and the safest next tasks.
+**Purpose:** First document a new development session should read. It summarizes current NIAHCIA state, decisions to preserve, unresolved work, and safest next tasks.
 
-**Maintenance rule:** Update this file whenever priorities, blockers, locked decisions, or major implementation state changes. Keep `docs/spec-status.md` synchronized as the detailed protocol inventory.
+**Maintenance rule:** Update this file whenever priorities, blockers, locked decisions, or major implementation state change. Keep `docs/spec-status.md` synchronized as the detailed inventory.
 
-## How to resume work
+## Resume sequence
 
-1. Read this file first.
-2. Read `docs/spec-status.md` for the complete specification inventory/maturity.
-3. Read `docs/why-niahcia.md` for architectural rationale.
-4. Read the relevant specification before changing implementation behavior.
-5. Inspect current `niahcia/niahcia` implementation and open/failed GitHub work.
-6. Keep implementation documentation and `niahcia-protocol` synchronized with code changes.
-7. Never silently replace locked interoperability behavior; version changes and update vectors/specification together.
+1. Read this file.
+2. Read `docs/spec-status.md`.
+3. Read `docs/why-niahcia.md`.
+4. Read relevant specifications before changing behavior.
+5. Inspect current `niahcia/niahcia` implementation and GitHub failures/issues.
+6. Keep implementation docs and `niahcia-protocol` synchronized.
+7. Never silently replace locked interoperability behavior; version changes and vectors together.
 
-## Project objective
+## Core architecture
 
-NIAHCIA is a decentralized AI + blockchain network with deliberately separated responsibilities:
+- CPU PoW is canonical chain authority; RandomX is current candidate.
+- GPU/accelerator AI compute is a separate economic role from mining.
+- Storage/service nodes provide measurable service but never fork-choice/finality authority.
+- Agents/models/jobs/capabilities/memory/verification/payment are explicit protocol objects.
+- Reth supplies EVM execution while NIAHCIA retains chain identity/consensus boundary.
+- Key differentiation objectives: **portable agent sovereignty** and **economically maintained, self-healing persistence**.
 
-- CPU proof-of-work secures canonical chain consensus; RandomX is the current candidate.
-- GPU/accelerator workers execute AI/compute jobs and are rewarded separately from mining.
-- Service/storage nodes provide storage, archival, relay, snapshots, observations, and measurable proof-of-service without becoming consensus authorities.
-- Agents, models, execution profiles, jobs, capabilities, memory, verification policies, and payment plans are explicit protocol objects.
-- Smart-contract/EVM execution integrates through Reth while NIAHCIA retains its chain identity/consensus boundary.
+## Non-negotiable boundaries
 
-Key differentiation objectives are **portable agent sovereignty** and **economically maintained, self-healing persistence**.
+- CPU PoW alone determines canonical chain by cumulative valid work.
+- Service/storage nodes do not vote on canonical chain.
+- Execution hosts are replaceable and do not automatically own/control Agents.
+- Fixed universal Prototype-0 2-of-3 verification is superseded by policy-driven verification.
+- Storage may preserve ciphertext without decryption/governance/treasury/succession authority.
+- Distinct storage provider keys do not prove independent durability.
+- NCE/1 deterministic CBOR is the canonical serialization foundation.
 
-## Fundamental architecture rules
-
-### Consensus
-
-CPU PoW is the chain-security authority. Fork choice is cumulative valid PoW work. Service/storage nodes do not vote on, finalize, veto, or choose the canonical chain.
-
-### Compute
-
-AI compute is not required of miners. Execution hosts are replaceable resources and MUST NOT automatically gain agent ownership, treasury control, or full capabilities.
-
-### Verification
-
-The old Prototype-0 universal fixed 2-of-3 assumption is superseded. Verification is policy-driven through `VerificationPolicy`.
-
-### Service/storage
-
-Proof-of-service is payment/reward evidence, not chain work. Storage may preserve ciphertext without decryption/governance/treasury/succession authority. Distinct provider keys are not proof of independent durability; unknown independence remains unknown.
-
-### Canonical data
-
-NCE/1 deterministic CBOR is the canonical serialization foundation. Persistent identifiers, signing digests, and commitments require explicit domain separation and deterministic serialization.
-
-## Cryptographic authority direction
-
-The current candidate direction is now explicit:
-
-> Every protocol actor and economically controlled resource ultimately resolves to NIAHCIA cryptographic authority, but one private key must not perform every cryptographic role.
-
-A durable NIAHCIA address/entity is distinct from one eternal private key. Versioned authority epochs allow keys to rotate while identity remains stable.
+## Cryptographic authority candidates
 
 ### KeyAuthorityV1
 
-`spec/key-authority-v1.md` defines the candidate separation between:
+`spec/key-authority-v1.md`: durable NIAHCIA identity/address is distinct from one eternal private key. Separates signing/control authority, encryption authority, bounded delegated/session authority, and explicit recovery policy.
 
-- durable NIAHCIA identity/address;
-- signing/control authority;
-- encryption authority;
-- bounded delegated/session authority;
-- explicit recovery policy.
+Bulk private state uses random symmetric data-encryption keys (DEKs), not direct encryption with the wallet/signing key. Long-term signing keys should be isolated from AI runtimes. Structured canonical policy checks precede privileged signing.
 
-Bulk agent memory/private objects should use random symmetric data-encryption keys (DEKs), with access controlled/wrapped under versioned encryption authority. Do **not** directly encrypt all agent state with the wallet/signing private key.
-
-Long-term private signing keys should not normally be exposed to AI runtimes. A signer/key service should validate canonical operations against capabilities/policy/budgets before signing. Natural-language model output is untrusted input, never sufficient privileged authorization.
-
-An autonomous Agent should be capable of possessing its own durable NIAHCIA cryptographic identity distinct from its creator/controller.
+An autonomous Agent may have its own durable NIAHCIA identity distinct from its creator/controller.
 
 ### KeyRotationV1
 
-`spec/key-rotation-v1.md` defines candidate auditable authority transitions:
-
-```text
-same durable subject/address
-  authority epoch N
-       -> authorized rotation
-  authority epoch N+1
-```
-
-Historical signatures remain attributable to the epoch valid when created. Competing/stale rotations require deterministic rejection. Rotation limits future compromise but cannot make already exposed plaintext secret again.
+`spec/key-rotation-v1.md`: same durable subject can move from authority epoch N to N+1. Historical signatures remain attributable to their valid epoch; stale/competing rotations require deterministic rejection.
 
 ### RecoveryPolicyV1
 
-`spec/recovery-policy-v1.md` defines opt-in recovery. Candidate policy classes include NONE, DESIGNATED, THRESHOLD, CONTRACT, and DELAYED, but exact semantics are not locked.
+`spec/recovery-policy-v1.md`: opt-in recovery candidate. Candidate classes include NONE, DESIGNATED, THRESHOLD, CONTRACT, DELAYED. No NIAHCIA master recovery key exists. Recovery normally replaces authority rather than reconstructing a lost/compromised signing key.
 
-There is **no NIAHCIA master recovery key**. Miners, storage nodes, compute hosts, developers, websites, and service nodes gain no implicit recovery authority.
+Control recovery and historical memory decryption are separate. Storage nodes never become silent key escrow.
 
-A successful recovery should normally authorize replacement/rotation into a new KeyAuthority epoch rather than reconstruct the old lost/compromised signing key.
+## Secure portable execution
 
-Control recovery and historical memory decryption are separate. A policy may deliberately make old encrypted memory unrecoverable, provide threshold recovery of selected key material, or permit only future encryption-key rotation. Storage nodes must never become silent key escrow.
+### AgentHostMigrationV1
 
-## Portable-agent candidates
+`spec/agent-host-migration-v1.md` defines the candidate security boundary for moving Agent execution between hosts.
 
-`AgentManifestV1` binds an exact AgentVersion to lineage, model/execution policy, capabilities, memory descriptors, payment/privacy/succession policy, and storage manifests.
+Central rule:
 
-`ExecutionReceiptV1` binds a Job to exact agent/version/manifest, model/profile, worker, result commitment, verification evidence, resource accounting, and settlement while permitting private inputs/results to remain committed rather than disclosed.
+> execution is portable; authority is not handed to the execution host.
 
-Do not prematurely lock succession mechanics, privacy classes, scheduling, reputation, receipt inclusion, one TEE vendor, or universal deterministic-output requirements.
+A destination host resolves the exact Agent/AgentVersion/AgentManifest and current KeyAuthority epoch, then receives only a bounded session capability and authorized memory scope. It does **not** receive the Agent's master signing key, unrestricted treasury, recovery/succession authority, or all historical memory keys.
 
-## Storage durability candidates
+The candidate uses envelope-encryption semantics conceptually: durable memory is ciphertext under DEKs; an authorized execution session obtains only the key material required for its permitted scope. The exact DEK-release mechanism is deliberately open (session-key wrapping, threshold release, optional attestation/private-compute profiles, etc.).
 
-### StorageAgreementV1
+Migration must work without cooperation from a dead/failed old host when durable checkpoint/storage state survives elsewhere. Local host disk is not authoritative persistence.
 
-Defines exact content-addressed object, duration, target/minimum provider level, storage profile, challenge/retrieval policy, payment/budget, privacy, renewal, and recovery. Initial direction is chunked replication; erasure coding remains a future versioned profile.
+### Durable checkpoints and duplicate execution
 
-### StorageHealthV1
+Portable execution requires an explicit committed checkpoint/state boundary. Work after the last durable checkpoint may be retried after host failure.
 
-Candidate lifecycle:
+NIAHCIA must assume old and new hosts can temporarily execute concurrently. Safety cannot depend on “one Agent = one process.” It must come from job/session IDs, current state versions, bounded capabilities, signer policy, spending limits, replay protection, and canonical state transitions.
 
-```text
-HEALTHY -> DEGRADED -> AT_RISK -> RECOVERING -> HEALTHY
-                              -> UNAVAILABLE
-EXPIRED
-```
+Exactly-once external side effects cannot be inferred from memory checkpointing. Payments/tool actions need idempotency/receipt/replay semantics of their own.
 
-Health is service state, not finality. Recovery should be permissionless from surviving canonical content. Implementation follow-up `niahcia/niahcia#27` is intentionally non-consensus telemetry only after CI is green.
+### Host confidentiality limitation
 
-### StorageProviderIndependenceV1
+Ordinary compute hosts may see plaintext intentionally delivered to them. Migration/encryption-at-rest does not equal private inference. Stronger confidentiality requires a separately versioned private-compute mechanism; no single TEE vendor should become universal protocol authority.
 
-Separates provider identity count from actual durability evidence. Categories: `SAME_OPERATOR`, `SHARED_DOMAIN`, `UNKNOWN`, `EVIDENCE_OF_SEPARATION`. No centralized KYC/geolocation/cloud authority should decide network-wide storage eligibility.
+## Portable-agent objects
 
-### Storage threat conclusions
+`AgentManifestV1`: exact AgentVersion + lineage + execution/model policy + capabilities + memory + payment/privacy/succession/storage references.
 
-`docs/threat-model.md` covers Sybil replicas, correlated failure domains, just-in-time storage, replay, fake retrieval/bandwidth farming, repair farming, withholding/extortion, corrupt reconstruction, encrypted-memory authority separation, key loss, object poisoning, resource exhaustion, and health manipulation.
+`ExecutionReceiptV1`: binds a Job to exact agent/version/manifest, model/profile, worker, result commitment, verification evidence, resource accounting, and settlement while permitting private payloads to remain committed rather than public.
 
-Do not yet lock storage pricing/rewards, provider-independence scoring, automatic renewal, encryption/key distribution, erasure coding, repair selection, geography, health windows/hysteresis, bandwidth accounting, infrastructure attestation, or agreement consensus inclusion.
+Still open: succession mechanics, privacy classes, scheduling, reputation, receipt inclusion, one TEE choice, universal deterministic-output assumptions.
+
+## Storage candidates
+
+`StorageAgreementV1`: exact content object, duration, provider targets, storage profile, challenge/retrieval policy, budget, privacy, renewal, recovery. Start with chunked replication; erasure coding later.
+
+`StorageHealthV1`: `HEALTHY -> DEGRADED -> AT_RISK -> RECOVERING -> HEALTHY`, with `UNAVAILABLE` and `EXPIRED`. Health is service state, not finality. Implementation issue `niahcia/niahcia#27` is non-consensus telemetry only after CI is green.
+
+`StorageProviderIndependenceV1`: categories `SAME_OPERATOR`, `SHARED_DOMAIN`, `UNKNOWN`, `EVIDENCE_OF_SEPARATION`; no central KYC/geolocation/cloud authority.
+
+`docs/threat-model.md` covers storage Sybil/correlation, challenge/replay, fake traffic, repair farming, withholding, corrupt reconstruction, key loss, object poisoning, resource exhaustion, health manipulation, plus KeyAuthority/recovery/migration threats.
 
 ## Native addresses
 
-Address V1 is locked for pre-alpha interoperability: Bech32m; version `0x01`; 22-byte decoded payload (version + kind + 20-byte payload); Account `0x00`; Contract `0x01`; HRPs `niah`, `tniah`, `dniah`.
+Address V1 remains locked pre-alpha: Bech32m; version `0x01`; 22-byte decoded payload; Account `0x00`; Contract `0x01`; HRPs `niah`, `tniah`, `dniah`.
 
-Native addresses are user-facing identity. Reth's 20-byte execution address is an internal interoperability representation.
-
-The new KeyAuthority candidate does **not** change locked Address V1 encoding. It defines how durable identities can resolve versioned authority without changing address presentation.
+KeyAuthority does not alter locked address encoding; it defines versioned authority behind durable identity.
 
 ## Monetary representation
 
-Current direction is **8 decimal places**. Consensus/accounting arithmetic uses integers, never floating point. Fee/supply/denomination/chain-ID/overflow/conversion boundaries require explicit specification and vectors.
+Current direction: **8 decimals**; integer consensus/accounting arithmetic only. Fee/supply/denomination/chain-ID/overflow/conversion boundaries require explicit specs/vectors.
 
 ## RandomX interoperability
 
-RandomX remains the PoW direction. A key project goal is ordinary/common RandomX miner and pool compatibility wherever protocol-safe. Do not casually change locked RandomX input/vectors merely to make a miner work; define the interoperability boundary and version consensus/vector changes together if necessary. A dedicated NIAHCIA miner is lower priority.
+RandomX remains PoW direction. Ordinary/common RandomX miner/pool compatibility is preferred where protocol-safe. Do not casually change locked RandomX inputs/vectors for miner convenience; define/version the interoperability boundary deliberately. Dedicated NIAHCIA miner remains lower priority.
 
-## Current blocker / caution
+## Current blocker
 
-At this handoff, GitHub work associated with **#266** was red/failing. Avoid stacking risky consensus changes until rechecked/resolved. Formatting/CI cleanup was already identified. GitHub state is authoritative.
+At this handoff, GitHub work associated with **#266** was red/failing. Avoid risky consensus changes until rechecked/resolved. GitHub state is authoritative.
 
 ## Safe work while CI is blocked
 
-1. Protocol-owned Address V1 interoperability vectors.
-2. Denomination/value/fee arithmetic vectors.
+1. Address V1 interoperability vectors.
+2. Denomination/value/fee vectors.
 3. Remove stale Prototype-0 fixed 2-of-3 language.
-4. Cross-check NCE/1 serialization, IDs, domains, signature preimages, and storage vectors.
-5. Review candidate AgentManifest, ExecutionReceipt, StorageAgreement, StorageHealth, StorageProviderIndependence, KeyAuthority, KeyRotation, and RecoveryPolicy at protocol level only.
-6. Allocate canonical IDs/fields/domains and create vectors before activating candidates in implementation.
-7. Threat-model signer isolation, recovery abuse, guardian compromise, key-epoch rollback, capability leakage, and encrypted-memory continuity.
-8. Keep both repositories' documentation synchronized.
+4. Cross-check NCE/1 IDs/domains/signature preimages/storage vectors.
+5. Review candidate AgentManifest, ExecutionReceipt, StorageAgreement, StorageHealth, StorageProviderIndependence, KeyAuthority, KeyRotation, RecoveryPolicy, and AgentHostMigration only at protocol level.
+6. Allocate canonical IDs/fields/domains and vectors before implementation activation.
+7. Continue adversarial review of signer isolation, recovery/guardian abuse, authority rollback, capability leakage, memory unlock, migration duplication, and side-effect replay.
+8. Keep both repositories' docs synchronized.
 
-Consensus work needing deliberate review includes RandomX stock-miner/pool interoperability, public-testnet RandomX epoch/seed parameters, remaining monetary/supply/fee constants, genesis/network parameters, and chain-ID finalization.
+Deliberate consensus review still needed for RandomX stock miner/pool interoperability, public-testnet RandomX epoch/seed parameters, remaining monetary constants, genesis/network parameters, and chain-ID finalization.
 
 ## Documentation model
 
 - `niahcia/niahcia` — implementation behavior/tests/docs.
-- `niahcia/niahcia-protocol` — implementation-independent architecture, formats, interoperability rules, security boundaries, research, and protocol vectors.
+- `niahcia/niahcia-protocol` — implementation-independent architecture, formats, interoperability rules, security boundaries, research, vectors.
 
-When implementation changes protocol-visible behavior, update both in the same workstream.
+Protocol-visible implementation changes update both.
 
 ## Development doctrine
 
 Prefer small, testable milestones. Before public devnet/testnet prioritize deterministic consensus, reproducible vectors, stable network identity, reliable startup/sync, miner/pool interoperability, clear execution-engine boundary, observable failures, and green CI.
 
-Advanced scheduling, markets, reputation, verification, privacy, succession, storage economics, and autonomous-agent economics can evolve behind versioned protocol objects afterward.
+## New-session behavior
 
-## What a new chat should do next
-
-If asked simply to continue:
-
-1. Check GitHub status, especially #266 if it still exists/red.
-2. Read `docs/spec-status.md`.
-3. Compare implementation against relevant protocol specs.
-4. Pick the highest-priority safe unresolved item.
-5. Implement/test only if appropriate.
-6. Update both implementation and protocol docs.
-7. Update this handoff when priorities/blockers change.
-
-If CI remains blocked, continue safe vector/documentation/threat-model work rather than unrelated consensus changes.
+If asked simply to continue: check GitHub status/#266, read spec status, compare implementation to relevant specs, choose highest-priority safe unresolved work, test if appropriate, update both doc sources, and refresh this handoff. If CI remains blocked, continue safe specification/vector/threat-model work rather than unrelated consensus changes.
 
 ## Quick references
 
@@ -200,6 +154,7 @@ If CI remains blocked, continue safe vector/documentation/threat-model work rath
 - `spec/key-authority-v1.md`
 - `spec/key-rotation-v1.md`
 - `spec/recovery-policy-v1.md`
+- `spec/agent-host-migration-v1.md`
 - `spec/agent-manifest-v1.md`
 - `spec/execution-receipt-v1.md`
 - `spec/storage-agreement-v1.md`
@@ -215,4 +170,4 @@ If CI remains blocked, continue safe vector/documentation/threat-model work rath
 
 ---
 
-**Handoff principle:** A new session should be able to read this document, inspect current GitHub state, and continue the existing engineering direction without relying on chat history.
+**Handoff principle:** A new session should be able to read this document, inspect current GitHub state, and continue without relying on chat history.
