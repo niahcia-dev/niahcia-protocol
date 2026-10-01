@@ -21,11 +21,35 @@
 - Storage/service nodes provide measurable service but never fork-choice/finality authority.
 - Agents/models/jobs/capabilities/memory/verification/payment are explicit protocol objects.
 - Reth supplies EVM execution while NIAHCIA retains chain identity/consensus boundary.
-- Key differentiation objectives: **portable agent sovereignty** and **economically maintained, self-healing persistence**.
+- Key differentiation objectives: **portable agent sovereignty**, **economically maintained self-healing persistence**, and an **ownerless decentralized Primary Agent as a network public good**.
 
 ## Non-negotiable boundaries
 
 CPU PoW alone determines canonical chain by cumulative valid work. Service/storage nodes do not vote on canonical chain. Execution hosts are replaceable and do not automatically own/control Agents. Fixed Prototype-0 universal 2-of-3 verification is superseded by policy-driven verification. Storage may preserve ciphertext without decryption/governance/treasury/succession authority. Distinct provider keys do not prove independent durability. NCE/1 deterministic CBOR is canonical serialization foundation.
+
+## Primary Agent — core objective
+
+`spec/primary-agent-v1.md` defines the candidate architecture for NIAHCIA's default public conversational Agent.
+
+The Primary Agent is intended to be a persistent, ChatGPT-style entry point for ordinary users while remaining decentralized and non-authoritative.
+
+Central rules:
+
+- **central to user experience, never central to consensus**;
+- **ownerless in the intended production model**;
+- **use is optional** — direct user-to-Agent and Agent-to-Agent interaction remains possible;
+- **baseline operation lives decentralized in the network rent-free to the Primary Agent**;
+- rent-free does **not** mean providers work for free or that unlimited resources are available;
+- expensive user workloads outside the bounded public-service allocation are funded normally;
+- the Primary Agent may learn from eligible network knowledge/results only through provenance, permission, verification/evidence, confidence, and admission-policy boundaries;
+- private user/Agent memory is not automatically learning/training material;
+- Primary Agent status grants zero special PoW/finality/validation/consensus authority.
+
+The intended production Agent must not depend on one human holding one unrestricted master key. Its stable protocol identity, authority, encrypted state, checkpoints, storage, workflows, and learning/provenance should survive host/model/frontend/provider changes.
+
+Open Primary Agent work includes permanent identity establishment, decentralized KeyAuthority/governance, `PrimaryAgentServicePolicy`, rent-free resource accounting and abuse limits, provider compensation source, durable knowledge/provenance objects, learning admission/privacy policy, upgrade governance, recovery/succession, stronger public-agent storage durability, frontend resolution, and canonical vectors.
+
+`docs/why-niahcia.md` now treats this as a core NIAHCIA objective rather than a later application feature.
 
 ## Cryptographic authority candidates
 
@@ -37,39 +61,17 @@ CPU PoW alone determines canonical chain by cumulative valid work. Service/stora
 
 ## Portable execution and continuity
 
-`AgentHostMigrationV1`: **execution is portable; authority is not handed to the execution host.** Destination receives bounded session capability and authorized memory scope, not master signing/treasury/recovery/succession authority. Migration can continue without a dead old host when durable state survives.
+`AgentHostMigrationV1`: **execution is portable; authority is not handed to the execution host.** Destination receives bounded session capability and authorized memory scope, not master signing/treasury/recovery/succession authority.
 
-`AgentCheckpointV1`: **Agent state can be checkpointed; external reality cannot be rolled back with it.** Checkpoints bind Agent/version/manifest/authority epoch, lineage, memory/private-state roots, pending/completed effects, and active jobs. Local uncommitted process state is not durable Agent truth.
+`AgentCheckpointV1`: **Agent state can be checkpointed; external reality cannot be rolled back with it.** Checkpoints bind Agent/version/manifest/authority epoch, lineage, memory/private-state roots, pending/completed effects, and active jobs.
 
-`SideEffectIntentV1`: **retry the intent, not a newly invented action.** Same logical retry retains the same effect ID. `UNKNOWN` is first-class; timeout/lost acknowledgement does not prove failure. Target-native idempotency is used where available. NIAHCIA does not claim universal exactly-once behavior for external systems that cannot provide it.
+`SideEffectIntentV1`: **retry the intent, not a newly invented action.** Same logical retry retains the same effect ID. `UNKNOWN` is first-class; timeout/lost acknowledgement does not prove failure.
 
 ## Multi-step autonomous work
 
-### AgentWorkflowV1
+`AgentWorkflowV1`: **a workflow is a durable state machine, not a distributed database transaction.** External systems are not assumed to share one atomic commit/rollback boundary. Unknown effects are reconciled before retry; unsafe ambiguity may stop at `MANUAL_REVIEW`.
 
-`spec/agent-workflow-v1.md` now defines the candidate durable multi-step orchestration model.
-
-Central rule:
-
-> A workflow is a durable state machine, not a distributed database transaction.
-
-A workflow may coordinate compute, payments, contracts, storage, messages, APIs/tools, purchases, and agent-to-agent actions. Arbitrary external systems are never assumed to share one atomic commit/rollback boundary.
-
-Each externally visible step uses `SideEffectIntentV1` where applicable. A step that times out enters `UNKNOWN`; reconciliation happens before retry. If safety cannot be established, the workflow may remain unknown or enter `MANUAL_REVIEW` rather than guessing.
-
-### Compensation is not rollback
-
-If a completed step must be undone economically/operationally, compensation is a **new forward action** with its own effect identity, authority, budget, receipt, and failure state. Examples include refunding a payment, cancelling a reservation where possible, revoking a capability, or issuing a corrective action.
-
-Some actions are irreversible. Workflow policy should identify them explicitly and, where appropriate, defer them until reversible prerequisites complete or require explicit controller approval.
-
-### Migration and workflow continuity
-
-Workflow, step, effect, and budget identities survive host migration. Moving to another GPU host never resets spend limits or permits a fresh payment merely because execution restarted.
-
-Duplicate hosts are expected. Canonical workflow state, signer policy, stable effect IDs, budgets, capabilities, and target idempotency/reconciliation contain the race.
-
-Agent-to-agent workflows preserve each Agent's independent authority. One Agent cannot roll back another Agent's finalized state because its own workflow later fails.
+Compensation is a new forward action with its own effect identity/authority/budget/receipt, not rollback. Workflow/effect/budget identity survives host migration. Duplicate execution is expected and contained with canonical state, signer policy, stable effect IDs, budgets, capabilities, and idempotency/reconciliation.
 
 ## Portable-agent objects
 
@@ -113,9 +115,10 @@ At this handoff, GitHub work associated with **#266** was red/failing. Avoid ris
 4. Cross-check NCE/1 IDs/domains/signature preimages/storage vectors.
 5. Review candidate protocol objects without activating them in implementation.
 6. Allocate canonical IDs/fields/domains and vectors before implementation activation.
-7. Continue adversarial review of authority, recovery, migration, checkpoint rollback, duplicate execution, side-effect replay, workflow compensation, and budget abuse.
-8. Next portable-agent gap: define deterministic effect receipts/reconciliation evidence and how workflow state learns that an external action is OBSERVED/FINALIZED without trusting the execution host's assertion.
-9. Keep both repositories' docs synchronized.
+7. Continue adversarial review of authority, recovery, migration, checkpoint rollback, duplicate execution, side-effect replay, workflow compensation, budget abuse, and Primary Agent public-service abuse.
+8. Define deterministic effect receipts/reconciliation evidence.
+9. Define Primary Agent knowledge/provenance and public-service allocation candidates without locking economics prematurely.
+10. Keep both repositories' docs synchronized.
 
 Deliberate consensus review still needed for RandomX stock miner/pool interoperability, public-testnet RandomX epoch/seed parameters, remaining monetary constants, genesis/network parameters, and chain-ID finalization.
 
@@ -140,6 +143,7 @@ If asked simply to continue: check GitHub status/#266, read spec status, compare
 - `docs/spec-status.md`
 - `docs/why-niahcia.md`
 - `docs/threat-model.md`
+- `spec/primary-agent-v1.md`
 - `spec/key-authority-v1.md`
 - `spec/key-rotation-v1.md`
 - `spec/recovery-policy-v1.md`
