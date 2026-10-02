@@ -8,14 +8,17 @@ It is intentionally architecture-first. This document must not silently invent c
 
 ## 1. Core objective
 
-NIAHCIA is a decentralized protocol in which independent resource classes perform distinct jobs:
+NIAHCIA is a decentralized protocol for owning, requesting, executing, verifying, and paying for machine intelligence.
+
+Its minimum operating stack is deliberately small:
 
 - CPU proof-of-work establishes chain consensus and canonical ordering.
-- Reth provides EVM execution and execution-state validation.
-- GPU compute workers execute AI inference jobs and earn compute compensation independently of block mining.
-- service/storage nodes distribute and preserve canonical model and protocol data and prove useful service.
+- the native NIAHCIA execution/state layer validates transactions, balances, commitments, authorization, payments, and settlement.
+- wallets/clients create requests, hold user authority, retain private local state, and communicate with compute workers.
+- GPU/accelerator compute workers execute AI inference jobs and earn compute compensation independently of block mining.
 - verification mechanisms determine whether off-chain compute results satisfy the job's declared verification policy.
-- agents are protocol identities that can discover services, request work, hold permissions, use memory descriptors, and participate in protocol payments as those capabilities are enabled.
+
+Optional service networks, including decentralized storage, may provide durability, replication, retrieval, relay, or specialized verification. They are not prerequisites for ordinary AI inference or for base-chain correctness.
 
 No compute worker, service/storage node, model provider, agent, website, scheduler, or bootstrap host is a second chain-consensus authority.
 
@@ -23,11 +26,11 @@ No compute worker, service/storage node, model provider, agent, website, schedul
 
 CPU PoW answers the consensus question: which valid chain has the greatest accepted cumulative work?
 
-Execution answers: given an ordered execution payload, what state transition does the EVM produce?
+Native execution answers: given an ordered native transaction set, what deterministic NIAHCIA state transition results?
 
 AI compute answers: which worker can execute a declared model/runtime/profile job and produce a verifiable result commitment?
 
-Storage/service answers: where can canonical content be retrieved, and did a registered node provide the service it claimed?
+Optional storage/service answers: when a user or application requests remote durability or another service, where can committed content be retrieved and did a provider perform the service it claimed?
 
 These roles may coexist on one physical machine, but their protocol authority does not merge. More GPU/storage capacity does not grant additional PoW consensus authority. Mining a block does not make an AI result correct merely because a miner included it.
 
@@ -50,24 +53,27 @@ Compatibility with stock common RandomX mining software is an explicit objective
 
 The exact XMRig-compatible PoW preimage/blob layout is **CANDIDATE / NOT LOCKED**. It requires a separately reviewed interoperability specification plus canonical node/pool/XMRig vectors before production use.
 
-## 4. Execution
+## 4. Native execution
 
-Reth owns EVM execution and execution state. NIAHCIA owns chain ordering and consensus.
+NIAHCIA uses its own native execution and state transition layer.
 
 ```text
-NIAHCIA consensus
+NIAHCIA CPU-PoW consensus
        |
-       | authenticated Engine API
        v
-Reth execution engine
+native transaction ordering
        |
-       +-- EVM transaction execution
-       +-- execution payload validation
-       +-- execution state
-       +-- Ethereum-compatible execution RPC
+       v
+deterministic native execution
+       |
+       +-- account state
+       +-- authorization
+       +-- transaction commitments
+       +-- execution commitments
+       +-- payments and settlement
 ```
 
-Consensus commits to the execution relationship defined by the applicable block protocol; nodes independently validate it. Reth conventions do not silently redefine NIAHCIA-native signed objects.
+Every full node independently validates the native transition. External execution engines are not required for the base protocol to remain valid or usable.
 
 ## 5. Identity and addresses
 
@@ -126,13 +132,25 @@ VerificationPolicy identifies the evidence/agreement rules required for a class 
 
 Disagreement resolves through explicit versioned states such as acceptance, additional verification, challenge, timeout, reassignment, failure, or another specified outcome—not silent coordinator discretion.
 
-## 10. Service/storage
+## 10. Optional service/storage networks
 
-Service/storage nodes provide useful network services but are not a second consensus committee. Initial responsibilities include canonical manifest ingestion, content-addressed storage, chunk discovery/transfer, integrity verification, availability/service challenges, retrieval accounting, and signed proof-of-service evidence where required.
+Decentralized storage is an optional service, not part of the minimum NIAHCIA AI execution path.
 
-Proof-of-service demonstrates useful service under its own challenge rules. It does **not** choose the canonical chain.
+Ordinary V1 chat/inference may operate as:
 
-Canonical content should be reconstructable from independently verifiable manifests/chunks rather than depending on one operator's server.
+```text
+wallet/client
+  -> encrypted job delivery
+  -> compute worker
+  -> encrypted result return
+  -> wallet-local encrypted history/memory
+```
+
+No storage node is required for that flow. Compute workers may also keep supported model weights locally; the protocol need not provide model storage merely to schedule inference.
+
+Users and applications may later request decentralized storage for cross-device persistence, replicated encrypted memory, large artifacts, model distribution, backups, or long-lived autonomous agents. When used, service/storage nodes may provide content-addressed storage, chunk discovery/transfer, integrity verification, availability/service challenges, retrieval accounting, and signed proof-of-service evidence.
+
+Proof-of-service demonstrates useful service under its own challenge rules. It does **not** choose the canonical chain and storage availability must never become a prerequisite for base-chain validity.
 
 ## 11. P2P protocol families
 
@@ -140,7 +158,7 @@ NIAHCIA distinguishes three logical families:
 
 - **Chain P2P** — headers, blocks, synchronization, consensus state, and transaction propagation where applicable.
 - **AI P2P** — worker discovery, jobs, assignments, input retrieval, output streaming, result commitments, and verification traffic.
-- **Storage P2P** — manifest/chunk discovery, content transfer, availability challenges, and service evidence.
+- **Optional Storage P2P** — when requested, manifest/chunk discovery, content transfer, availability challenges, and service evidence.
 
 Implementations may reuse secure identity/transport primitives without collapsing the authority or semantics of these protocol families.
 
@@ -193,9 +211,11 @@ Project status terminology:
 
 ## 16. Pre-alpha acceptance objective
 
-The smallest complete network should demonstrate independent RandomX full/mining nodes with cumulative-work fork choice and Reth-backed execution; independent GPU workers with decentralized eligibility/assignment, execution profiles, result commitments and verification; independent service nodes with canonical content retrieval and proof of useful service; and the end-to-end flow `submit job -> execute -> verify -> finalize -> settle`.
+The smallest meaningful AI network should demonstrate independent CPU-PoW full/mining nodes with cumulative-work fork choice and native execution; at least two independently operated compute participants with decentralized eligibility/assignment, execution profiles, result commitments and verification; wallet/client-local encrypted chat memory; and the end-to-end flow `submit job -> execute -> verify -> return result -> settle`.
 
-The network must continue appropriate progress when individual miners, compute workers, service nodes, or the original bootstrap/developer host disappear.
+Decentralized storage is not required for this first milestone.
+
+The base blockchain must remain secure, valid, and usable even if every AI worker and every optional service/storage provider disappears. AI execution naturally pauses when no eligible compute worker exists, but chain consensus and ordinary native value transfer must continue independently.
 
 ## 17. Source-of-truth rule
 
