@@ -42,7 +42,8 @@ Its NCE/1 payload fields are permanently assigned:
     6   value
     7   gas_limit
     8   max_fee_per_gas
-    9   data
+    9   max_priority_fee_per_gas
+    10  data
 
 The envelope carries `schema_version = 1`; schema version is not duplicated in
 the payload.
@@ -52,8 +53,9 @@ NCE/1 unsigned-integer encoding.
 
 `target_payload` and `data` use definite-length CBOR byte strings.
 
-`value` and `max_fee_per_gas` are integer `aniah` quantities represented as
-exactly 16 unsigned big-endian bytes inside NCE/1 CBOR byte strings.
+`value`, `max_fee_per_gas`, and `max_priority_fee_per_gas` are integer
+`aniah` quantities represented as exactly 16 unsigned big-endian bytes inside
+NCE/1 CBOR byte strings.
 
 ## Actions
 
@@ -168,7 +170,13 @@ to that operation according to the active contract-runtime rules.
 
 `gas_limit` is the maximum execution gas authorized by the sender.
 
-`max_fee_per_gas` is an integer `aniah` quantity.
+`max_fee_per_gas` and `max_priority_fee_per_gas` are integer `aniah`
+quantities.
+
+`max_fee_per_gas` caps the sender's total fee per gas unit.
+
+`max_priority_fee_per_gas` caps the sender-authorized priority fee per gas unit
+paid to the canonical CPU-PoW block producer under the active V1 fee policy.
 
 The maximum authorized execution charge is:
 
@@ -231,6 +239,29 @@ V1 requires valid ranges and canonical low-S form.
 
 DER encoding and a recovery identifier are not part of
 SignedNativeTransactionV1.
+
+## Canonical decoding requirements
+
+Consensus and wire implementations MUST decode Native Transaction V1 strictly.
+
+For `NativeTransactionBodyV1`:
+
+- the NCE/1 envelope MUST match object type `0x0010` and schema version `1`;
+- the payload map MUST contain exactly fields `1..10` in canonical ascending order;
+- unsigned integers and lengths MUST use shortest-form NCE/1 encoding;
+- `value`, `max_fee_per_gas`, and `max_priority_fee_per_gas` MUST each decode from exactly 16 unsigned big-endian bytes;
+- the action value MUST be recognized by Native Transaction V1;
+- truncated values, unexpected major types, non-canonical encodings, extra fields, missing fields, and trailing bytes are invalid.
+
+For `SignedNativeTransactionV1`:
+
+- the NCE/1 envelope MUST match object type `0x0011` and schema version `1`;
+- the payload map MUST contain exactly fields `1..3` in canonical ascending order;
+- field `1 body` MUST contain the complete canonical bytes of one `NativeTransactionBodyV1`;
+- the public key and signature MUST satisfy the canonical representations defined below;
+- trailing bytes are invalid.
+
+A decoder used for consensus verification MUST be round-trip strict: decoding and then canonically re-encoding the object MUST reproduce the exact original byte sequence. Semantically equivalent but non-canonical byte encodings are rejected rather than normalized for verification.
 
 ## Signing digest
 
@@ -442,3 +473,24 @@ vectors MUST cover at least:
 
 Until those vectors and the dependent native state-transition rules are locked,
 this specification remains Candidate.
+
+## Native Transfer V1 gas schedule
+
+A successful `Transfer` action consumes exactly `1,000` gas.
+
+This is a NIAHCIA-native consensus accounting unit. It is not inherited from
+Ethereum, EVM, Reth, CPU instruction counts, elapsed execution time, or host
+performance.
+
+For V1, `gas_limit >= 1,000` is required for a successful native transfer.
+
+A transfer with `gas_limit < 1,000` is invalid and MUST NOT mutate native
+state, consume the sender nonce, transfer value, charge a fee, credit a
+producer, or record a protocol burn.
+
+A successful native transfer always reports exactly `1,000` gas used.
+Unused gas capacity is not charged.
+
+Contract calls and contract creation do not inherit this fixed transfer cost.
+Their metering is defined separately by the applicable native contract
+execution protocol.
