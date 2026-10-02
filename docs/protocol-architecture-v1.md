@@ -182,12 +182,31 @@ Economically useful roles are not interchangeable:
 
 Reward in one subsystem does not grant authority in another. Native settlement uses canonical NIAH/aniah representation unless a future versioned mechanism explicitly says otherwise.
 
+## 13.1 Compute micropayments
+
+Ordinary chat prompts should not require one base-chain transaction each.
+
+The preferred V1 payment path is:
+
+```text
+wallet funding account
+  -> simple ComputeChannelV1
+      -> bounded PaymentAuthorizationV1
+          -> many Jobs
+              -> signed usage receipts
+                  -> eventual native settlement
+```
+
+The first channel design is deliberately narrow: direct worker payment, no routing, no credit, no generalized state-channel scripting, a hard value ceiling, monotonic cumulative receipts, fixed expiry, and simple cooperative/expiry settlement.
+
+This mechanism reduces chain load and prompt-level economic linkage while preserving hard spending limits. It does not claim complete anonymity.
+
 ## 14. Security boundaries
 
 Participants may fail, disconnect, lie, withhold service, submit stale data, or attempt to game rewards. Therefore:
 
 - full nodes independently validate PoW and consensus;
-- Reth independently validates execution within the execution boundary;
+- full nodes independently validate native execution and state transitions;
 - AI results require evidence specified by their verification policy;
 - service rewards require defined proof of useful service;
 - signatures authenticate claims but do not make claims true;
