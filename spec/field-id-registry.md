@@ -13,8 +13,9 @@ This document assigns permanent numeric field identifiers used by NCE/1 canonica
 - removed/deprecated IDs remain reserved
 - IDs are never reused for another semantic meaning within the same object type
 - new fields append new IDs unless a specification explicitly reserves a range
-- payload key `1` is `schema_version` for all core protocol objects
-- the payload `schema_version` MUST equal the top-level NCE/1 envelope schema version
+- payload field IDs are defined by each object's registered schema
+- where an object schema includes a payload `schema_version`, it MUST equal the top-level NCE/1 envelope schema version
+- an object schema MAY rely solely on the top-level NCE/1 envelope schema version and therefore omit a duplicate payload `schema_version`
 
 ---
 
@@ -466,7 +467,8 @@ Exclusion is a preimage rule, not a renumbering rule.
 6   value
 7   gas_limit
 8   max_fee_per_gas
-9   data
+9   max_priority_fee_per_gas
+10  data
 ```
 
 ## SignedNativeTransaction — object type 0x0011
