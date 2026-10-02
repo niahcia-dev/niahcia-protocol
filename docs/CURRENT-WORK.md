@@ -20,7 +20,7 @@
 - GPU/accelerator AI compute is separate from mining.
 - Storage/service nodes provide measurable service but never fork-choice/finality authority.
 - Agents/models/jobs/capabilities/memory/verification/payment are explicit protocol objects.
-- Reth supplies EVM execution while NIAHCIA retains chain identity/consensus boundary.
+- NIAHCIA native execution is the active execution direction. Reth/EVM/Engine API/JWT integration is legacy code scheduled for coherent remove-and-replace once native transaction validation and state transition are ready.
 - Key differentiation objectives: **portable agent sovereignty**, **economically maintained self-healing persistence**, and an **ownerless decentralized Primary Agent as a network public good**.
 
 ## Non-negotiable boundaries
@@ -136,6 +136,24 @@ Still open: succession mechanics, privacy classes, scheduling, reputation, recei
 
 `docs/threat-model.md` covers storage, authority/recovery, migration, signer and duplicate-execution threats.
 
+## Native execution implementation status
+
+The canonical implementation repository is `niahcia/niahcia`. Protocol material was consolidated there while `niahcia/niahcia-protocol` remains a synchronized protocol mirror during the transition.
+
+Implemented on `main`:
+
+- native Account state foundation with deterministic state-root calculation;
+- NCE/1 canonical deterministic CBOR encoding foundation;
+- NativeTransactionBodyV1 with locked network/chain identity, action validation, canonical NCE payload/body encoding, fixed-width monetary fields, and tests;
+- Address V1 account derivation/interoperability work;
+- wallet-native encrypted chat protocol specification (specified only; not runtime implementation).
+
+The native transaction-body checkpoint is commit `a219480ef61686d1c5e74f2edd08326bf82b1651`. The wallet-chat specification checkpoint is `1fcaf08be040a2af93a1a513f44be949561669ca`.
+
+The next native-execution milestone is `SignedNativeTransactionV1`: exact signing digest, canonical secp256k1 public-key validation, low-S signature verification, authenticated sender derivation, canonical signed encoding, transaction ID, and byte-exact vectors. After that, implement deterministic Transfer pre-execution/state transition before removing the legacy external execution subsystem.
+
+Do not implement ContractCall/ContractCreate runtime semantics until their native runtime behavior is explicitly specified. Do not invent fee disposition while monetary policy remains unresolved.
+
 ## Native addresses
 
 Address V1 remains locked pre-alpha: Bech32m; version `0x01`; 22-byte decoded payload; Account `0x00`; Contract `0x01`; HRPs `niah`, `tniah`, `dniah`. KeyAuthority does not alter locked address encoding.
@@ -148,33 +166,27 @@ Current direction: **8 decimals**; integer consensus/accounting arithmetic only.
 
 RandomX remains PoW direction. Ordinary/common RandomX miner/pool compatibility is preferred where protocol-safe. Do not change locked RandomX inputs/vectors merely for miner convenience. Dedicated NIAHCIA miner remains lower priority.
 
-## Current blocker
+## Current work
 
-At this handoff, GitHub work associated with **#266** was red/failing. Avoid risky consensus changes until rechecked/resolved. GitHub state is authoritative.
+The previous handoff's `#266` blocker is stale: the referenced issue is not currently retrievable from `niahcia/niahcia`. Do not treat it as an active blocker without fresh GitHub evidence.
 
-## Safe work while CI is blocked
+Current priority is the native execution replacement, in small validated milestones:
 
-1. Address V1 interoperability vectors.
-2. Denomination/value/fee vectors.
-3. Remove stale Prototype-0 fixed 2-of-3 language.
-4. Cross-check NCE/1 IDs/domains/signature preimages/storage vectors.
-5. Review candidate protocol objects without activating them in implementation.
-6. Allocate canonical IDs/fields/domains and vectors before implementation activation.
-7. Continue adversarial review of authority, recovery, migration, checkpoint rollback, duplicate execution, side-effect replay, workflow compensation, budget abuse, Primary Agent public-service abuse, and knowledge poisoning.
-8. Define deterministic effect receipts/reconciliation evidence.
-9. Define `PrimaryAgentServicePolicy` candidate: bounded network-supported baseline resources, provider accounting/compensation boundary, anti-abuse/fairness, without prematurely locking emission percentages.
-10. Define canonical Primary Agent knowledge provenance/evidence objects and poisoning fixtures.
-11. Keep implementation/protocol/compute documentation synchronized.
+1. Complete `SignedNativeTransactionV1` and byte-exact vectors.
+2. Define and implement deterministic Transfer validation/state transition without inventing unresolved fee policy.
+3. Keep NCE/1, transaction, address, monetary, network, tests/vectors, and handoff documentation synchronized.
+4. Once the native path can replace it coherently, remove the legacy Reth/EVM/Engine API/JWT subsystem as one audited remove-and-replace change.
+5. Keep wallet-native encrypted chat as protocol-only until explicitly starting its implementation milestone.
 
 Deliberate consensus review still needed for RandomX stock miner/pool interoperability, public-testnet RandomX epoch/seed parameters, remaining monetary constants, genesis/network parameters, and chain-ID finalization.
 
 ## Documentation model
 
-- `niahcia/niahcia` — implementation behavior/tests/docs.
-- `niahcia/niahcia-protocol` — implementation-independent architecture, formats, interoperability rules, security boundaries, research, vectors.
+- `niahcia/niahcia` — canonical working repository for implementation plus consolidated protocol/spec/test-vector material.
+- `niahcia/niahcia-protocol` — synchronized protocol mirror retained during the repository transition; do not let it contradict the canonical repository.
 - `niahcia/niahcia-compute` — replaceable GPU/accelerator execution-host behavior and operational documentation.
 
-Protocol-visible implementation changes update the applicable sources.
+Protocol-visible implementation changes update the canonical repository and any retained mirror that carries the same protocol material.
 
 ## Development doctrine
 
@@ -200,7 +212,7 @@ are synchronized where applicable.
 
 ## New-session behavior
 
-If asked simply to continue: check GitHub status/#266, read spec status, compare implementation to relevant specs, choose highest-priority safe unresolved work, test if appropriate, update applicable docs, and refresh this handoff. If CI remains blocked, continue safe specification/vector/threat-model work rather than unrelated consensus changes.
+If asked simply to continue: inspect current `main` and CI, read this handoff and relevant specs, compare implementation to the native-execution specifications, then continue the highest-priority validated native milestone. Do not resurrect stale `#266` blocker language without fresh evidence. Keep wallet-chat work separate unless explicitly selected as the active implementation milestone.
 
 ## Quick references
 
