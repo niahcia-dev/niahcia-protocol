@@ -70,6 +70,32 @@ This allows the Primary Agent to improve through retrieval, routing, specialist 
 
 Open knowledge work: canonical field IDs, provenance/evidence objects, permission semantics, conflict/supersession rules, content/evidence identity, source/operator correlation, admission-policy object, retention/deletion semantics, vectors, and adversarial poisoning fixtures.
 
+
+## Wallet-native chat / encrypted conversation protocol
+
+`spec/chat-identity-and-compute-access-v1.md` now defines the candidate wallet-native chat architecture.
+
+Central rules:
+
+- **the wallet owns the chat capability**; `niahcia.com` and other websites are portals, not owners of the user's AI identity, conversations, keys, or long-term state;
+- desktop/mobile wallets and independent clients should be able to use the same protocol;
+- basic chat may be offered under implementation-defined free allowances;
+- advanced compute may require explicit, bounded wallet-authorized payment;
+- persistent private chat content is **encrypted by default**;
+- wallet spending keys must remain separate from chat-content encryption keys;
+- each conversation should use an independent content-encryption key that can be wrapped for authorized devices/identities;
+- prompts, responses, attachments, memories, private agent state, and private tool results must not be published on-chain;
+- portals should receive only minimum delegated authority and must not gain unrestricted wallet or spending control;
+- standard decentralized inference may still require temporary plaintext access inside the authorized execution environment; encryption at rest/in transit does not imply that a conventional worker is cryptographically blind to the prompt;
+- privacy execution profiles may later distinguish standard private execution, confidential/attested execution, and future MPC/FHE-style execution without changing the chat-session model.
+
+Current state: **specified, not implemented.** Do not expect current node/devnet tests to exercise wallet-chat identity, encrypted conversation storage, device key wrapping, portal delegation, or chat payment flows yet. Treat any implementation work here as a new feature requiring explicit tests/vectors and synchronization across protocol/implementation documentation.
+
+Relevant commits:
+
+- `niahcia/niahcia`: `1fcaf08be040a2af93a1a513f44be949561669ca`
+- `niahcia/niahcia-protocol`: `9f392a9fcf7c7e3700ec6ad89dbdf6c37b207638`
+
 ## Cryptographic authority candidates
 
 `KeyAuthorityV1`: durable NIAHCIA identity/address differs from one eternal key; separates signing/control, encryption, delegated/session authority, and recovery. Bulk private state uses random DEKs. Long-term signing keys should be isolated from AI runtimes.
