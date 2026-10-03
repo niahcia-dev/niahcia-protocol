@@ -18,7 +18,7 @@
 
 - CPU PoW is canonical chain authority; RandomX is current candidate.
 - GPU/accelerator AI compute is separate from mining.
-- Smart contracts are a core base-chain requirement, not a future optional feature. NativeTransaction V1 already reserves `ContractCall` and `ContractCreate`; their deterministic native runtime remains intentionally unimplemented until separately specified.
+- Smart contracts are a core base-chain requirement, not a future optional feature. The inactive development path now implements deterministic NVM1 `ContractCreate` and `ContractCall` execution over `NativeStateV3`, including runtime activation checks, gas/fee accounting, revert/trap behavior, block-level atomic rollback, and compute+contract coexistence. This path is not yet activated in consensus.
 - Decentralized storage/service nodes are optional service providers, never fork-choice/finality authorities, and are not required for ordinary AI inference.
 - Agents/models/jobs/capabilities/memory/verification/payment are explicit protocol objects.
 - NIAHCIA native execution is now the active node execution path. The legacy Reth/EVM/Engine API/JWT integration, replay journals, and external execution-hash mappings have been removed from the reference node.
@@ -189,13 +189,22 @@ Already reserved in NativeTransaction V1:
 - Contract Address V1;
 - native `value`, `gas_limit`, fee caps, nonce, and deterministic transaction identity.
 
-Still required before those actions can be activated:
+Implemented on the inactive development path:
 
-- accepted-transaction nonce/value/fee semantics around the now-inactive constructor transition;
-- deterministic ContractCall transition semantics;
-- contract receipts/execution commitments;
-- persistence/restart/reorg behavior for NativeStateV3;
-- canonical create/call/failure vectors and an explicit activation/version boundary.
+- accepted ContractCreate and ContractCall nonce/value/gas/fee semantics;
+- deterministic NVM1 execution with STOP/RETURN success, REVERT rollback, and trap/full-gas behavior;
+- NativeStateV3 contract balance/code/storage commitments;
+- V3 block execution with atomic whole-block rollback and contiguous per-transaction state roots;
+- runtime-registry activation enforcement at transaction and block boundaries;
+- compute-channel and smart-contract transitions coexisting in one V3 block;
+- domain-separated Native Receipt/Execution Commitment V3 covering transfers, compute, ContractCreate, and ContractCall.
+
+Still required before activation:
+
+- atomic NativeStateV3/body/execution persistence and restart recovery;
+- reorg restoration tests for contract-bearing V3 branches;
+- locked V3 create/call/failure and execution-commitment interoperability vectors;
+- explicit consensus activation/version boundary and devnet cross-node validation.
 
 NVM1's candidate execution surface now has deterministic stack/control, bounded byte memory, caller representation, persistent storage isolation, KECCAK256, RETURN/REVERT, and a vectored gas schedule. CALL_VALUE preserves the full native u128 value domain as a 32-byte stack value rather than truncating it to u64.
 
