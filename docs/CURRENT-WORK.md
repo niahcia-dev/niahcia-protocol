@@ -18,14 +18,16 @@
 
 - CPU PoW is canonical chain authority; RandomX is current candidate.
 - GPU/accelerator AI compute is separate from mining.
-- Storage/service nodes provide measurable service but never fork-choice/finality authority.
+- Smart contracts are a core base-chain requirement, not a future optional feature. NativeTransaction V1 already reserves `ContractCall` and `ContractCreate`; their deterministic native runtime remains intentionally unimplemented until separately specified.
+- Decentralized storage/service nodes are optional service providers, never fork-choice/finality authorities, and are not required for ordinary AI inference.
 - Agents/models/jobs/capabilities/memory/verification/payment are explicit protocol objects.
-- NIAHCIA native execution is the active execution direction. Reth/EVM/Engine API/JWT integration is legacy code scheduled for coherent remove-and-replace once native transaction validation and state transition are ready.
-- Key differentiation objectives: **portable agent sovereignty**, **economically maintained self-healing persistence**, and an **ownerless decentralized Primary Agent as a network public good**.
+- NIAHCIA native execution is now the active node execution path. The legacy Reth/EVM/Engine API/JWT integration, replay journals, and external execution-hash mappings have been removed from the reference node.
+- V1 AI state is local-first: wallet/client-local encrypted chat history and Agent memory are the default; decentralized persistence is deferred and optional.
+- Key differentiation objectives include portable Agent sovereignty, decentralized compute access, bounded wallet authority, and an ownerless decentralized Primary Agent as a network public good.
 
 ## Non-negotiable boundaries
 
-CPU PoW alone determines canonical chain by cumulative valid work. Service/storage nodes do not vote on canonical chain. Execution hosts are replaceable and do not automatically own/control Agents. Fixed Prototype-0 universal 2-of-3 verification is superseded by policy-driven verification. Storage may preserve ciphertext without decryption/governance/treasury/succession authority. Distinct provider keys do not prove independent durability. NCE/1 deterministic CBOR is canonical serialization foundation.
+CPU PoW alone determines canonical chain by cumulative valid work. Service/storage nodes do not vote on canonical chain. Execution hosts are replaceable and do not automatically own/control Agents. The former fixed universal 2-of-3 verification profile is superseded by policy-driven verification. Storage may preserve ciphertext without decryption/governance/treasury/succession authority. Distinct provider keys do not prove independent durability. NCE/1 deterministic CBOR is canonical serialization foundation.
 
 ## Primary Agent — core objective
 
@@ -70,7 +72,6 @@ This allows the Primary Agent to improve through retrieval, routing, specialist 
 
 Open knowledge work: canonical field IDs, provenance/evidence objects, permission semantics, conflict/supersession rules, content/evidence identity, source/operator correlation, admission-policy object, retention/deletion semantics, vectors, and adversarial poisoning fixtures.
 
-
 ## Wallet-native chat / encrypted conversation protocol
 
 `spec/chat-identity-and-compute-access-v1.md` now defines the candidate wallet-native chat architecture.
@@ -84,6 +85,8 @@ Central rules:
 - persistent private chat content is **encrypted by default**;
 - wallet spending keys must remain separate from chat-content encryption keys;
 - each conversation should use an independent content-encryption key that can be wrapped for authorized devices/identities;
+- private conversation history and Agent memory are wallet/client-local by default in V1;
+- ordinary inference must not depend on a storage/service network;
 - prompts, responses, attachments, memories, private agent state, and private tool results must not be published on-chain;
 - portals should receive only minimum delegated authority and must not gain unrestricted wallet or spending control;
 - standard decentralized inference may still require temporary plaintext access inside the authorized execution environment; encryption at rest/in transit does not imply that a conventional worker is cryptographically blind to the prompt;
@@ -130,7 +133,7 @@ Still open: succession mechanics, privacy classes, scheduling, reputation, recei
 
 `StorageAgreementV1`: exact content, duration, provider targets, profile, challenge/retrieval policy, budget, privacy, renewal, recovery.
 
-`StorageHealthV1`: `HEALTHY -> DEGRADED -> AT_RISK -> RECOVERING -> HEALTHY`, plus `UNAVAILABLE`/`EXPIRED`. Health is service state, not finality. `niahcia/niahcia#27` remains non-consensus telemetry after CI is green.
+`StorageHealthV1`: `HEALTHY -> DEGRADED -> AT_RISK -> RECOVERING -> HEALTHY`, plus `UNAVAILABLE`/`EXPIRED`. Health is service state, not finality and remains candidate non-consensus telemetry.
 
 `StorageProviderIndependenceV1`: `SAME_OPERATOR`, `SHARED_DOMAIN`, `UNKNOWN`, `EVIDENCE_OF_SEPARATION`; no central KYC/geolocation/cloud authority.
 
@@ -143,16 +146,64 @@ The canonical implementation repository is `niahcia/niahcia`. Protocol material 
 Implemented on `main`:
 
 - native Account state foundation with deterministic state-root calculation;
-- NCE/1 canonical deterministic CBOR encoding foundation;
-- NativeTransactionBodyV1 with locked network/chain identity, action validation, canonical NCE payload/body encoding, fixed-width monetary fields, and tests;
+- deterministic NativeStateV1 snapshot serialization and restart-safe persistence;
+- NCE/1 canonical deterministic CBOR encoding foundation plus strict shortest-form decoding for unsigned integers, definite byte strings, maps, and object envelopes;
+- NativeTransactionBodyV1 with locked network/chain identity, action validation, canonical NCE payload/body encoding, fixed-width monetary fields, strict canonical byte decoding, and round-trip/trailing-byte rejection tests;
+- SignedNativeTransactionV1 with canonical signing digest, secp256k1 validation, low-S enforcement, authenticated sender derivation, canonical signed encoding/decoding, transaction ID, round-trip canonicality enforcement, and locked interoperability vectors;
+- deterministic native Transfer execution with nonce, balance, gas-reserve, base-fee burn, producer-priority-fee, rollback, and overflow checks;
+- NativeBlockExecutionResultV1 with transaction, state, receipt, and execution commitments, complete canonical persistence including ordered receipts, and locked interoperability vectors;
+- atomic native block persistence binding BlockHeaderV1, the complete canonical NativeBlockExecutionResultV1, NativeStateV1 snapshot, cumulative-work fork choice, and best-head update in one redb transaction;
+- native persistence restart recovery, idempotence, commitment-mismatch rejection, native mining-template/solved-block submission, startup/restart recovery, and full-suite regression coverage;
 - Address V1 account derivation/interoperability work;
 - wallet-native encrypted chat protocol specification (specified only; not runtime implementation).
 
-The native transaction-body checkpoint is commit `a219480ef61686d1c5e74f2edd08326bf82b1651`. The wallet-chat specification checkpoint is `1fcaf08be040a2af93a1a513f44be949561669ca`.
+Relevant completed checkpoints include native transaction signing, native Transfer execution, native block execution commitments, deterministic state snapshots, atomic native block/body/execution/state persistence, native mining migration, P2P Version 3 full-body validation/relay, startup/restart migration, and complete removal of the legacy external execution path.
 
-The next native-execution milestone is `SignedNativeTransactionV1`: exact signing digest, canonical secp256k1 public-key validation, low-S signature verification, authenticated sender derivation, canonical signed encoding, transaction ID, and byte-exact vectors. After that, implement deterministic Transfer pre-execution/state transition before removing the legacy external execution subsystem.
+P2P Version 3 is now the active devnet implementation path for native blocks and transactions. The completed V3 baseline includes:
 
-Do not implement ContractCall/ContractCreate runtime semantics until their native runtime behavior is explicitly specified. Do not invent fee disposition while monetary policy remains unresolved.
+- TxInv/GetTx/Tx relay using exact canonical SignedNativeTransaction bytes;
+- canonical NativeBlockBodyV1 encoding/persistence with exact ordered transaction bytes and producer fee recipient;
+- atomic header + body + execution + NativeStateV1 persistence in one redb transaction;
+- independent full-body validation from locally trusted parent state;
+- non-empty mining templates built from the shared NativeMempoolV1 using a deliberately simple local txid-order policy;
+- exact body binding to mining template generation, so nonce/extra_nonce may change but transactions/fee recipient may not change under the same template;
+- canonical zero producer-fee recipient when aggregate priority fee is zero;
+- solved non-empty block persistence and canonical mempool eviction;
+- shared mempool template refresh after RPC admission, P2P relay, canonical attachment, and solved block submission;
+- restart-safe exact body re-serving/replay;
+- reorg handling that removes winning-branch transactions and best-effort reconsiders detached-only transactions without affecting consensus validity;
+- focused tests covering body codec, V3 framing, atomic persistence, non-empty template selection, solved-body persistence, and detached/winning-branch transaction distinction.
+
+P2P Version 2 remains protocol history/specification only; the active reference-node runtime is V3.
+
+Do not improvise ContractCall/ContractCreate runtime semantics. Smart-contract execution is required, but it must be implemented from an explicit versioned native contract-runtime specification with deterministic state/storage, gas, failure/revert, receipt, persistence, and vector rules. Do not invent a base-fee adjustment algorithm; Native Execution V1 currently consumes an explicit base fee and the evolution rule remains separate protocol work.
+
+## Smart-contract execution requirement
+
+Smart contracts have been a core NIAHCIA concept from the beginning. They are part of the base-chain execution model, alongside native value transfer and compute settlement; they are not an optional AI/service-layer feature.
+
+Already reserved in NativeTransaction V1:
+
+- `ContractCall`;
+- `ContractCreate`;
+- Contract Address V1;
+- native `value`, `gas_limit`, fee caps, nonce, and deterministic transaction identity.
+
+Still required before those actions can be activated:
+
+- a versioned native contract runtime/code format;
+- canonical contract state/storage commitments;
+- deterministic create/call/revert/failure semantics;
+- native-value semantics for contract execution;
+- bounded deterministic memory and instruction/resource metering;
+- contract gas schedule;
+- receipts/execution commitments;
+- persistence/restart/reorg behavior;
+- canonical vectors and an explicit activation/version boundary.
+
+Consensus contract execution must not perform AI inference or depend on external network/filesystem/wall-clock services. Off-chain AI may provide signed/committed evidence to contracts only through explicitly specified deterministic verification rules.
+
+See `spec/native-contract-runtime-v1.md`.
 
 ## Native addresses
 
@@ -168,17 +219,96 @@ RandomX remains PoW direction. Ordinary/common RandomX miner/pool compatibility 
 
 ## Current work
 
-The previous handoff's `#266` blocker is stale: the referenced issue is not currently retrievable from `niahcia/niahcia`. Do not treat it as an active blocker without fresh GitHub evidence.
+Current priority has moved past transaction propagation/non-empty block transport: the P2P V3 baseline is green.
 
-Current priority is the native execution replacement, in small validated milestones:
+The inactive NativeStateV2 / NativeTransactionV2 compute-channel foundation is now substantially implemented and remains deliberately isolated from the active runtime. Current green implementation includes:
 
-1. Complete `SignedNativeTransactionV1` and byte-exact vectors.
-2. Define and implement deterministic Transfer validation/state transition without inventing unresolved fee policy.
-3. Keep NCE/1, transaction, address, monetary, network, tests/vectors, and handoff documentation synchronized.
-4. Once the native path can replace it coherently, remove the legacy Reth/EVM/Engine API/JWT subsystem as one audited remove-and-replace change.
-5. Keep wallet-native encrypted chat as protocol-only until explicitly starting its implementation milestone.
+- deterministic NativeStateV2 account + compute-channel state root and canonical version-2 snapshots;
+- V1 -> V2 migration with an empty channel map and explicit V1/V2 snapshot discrimination;
+- NativeTransaction schema V2 canonical codecs, signing domain, transaction-ID domain, and V1/V2 cross-decoder rejection;
+- explicit V2 ComputeChannelOpen / ComputeChannelSettle / ComputeChannelRefund actions;
+- canonical Open / Settle / Refund payload codecs and domain-separated channel-ID derivation;
+- canonical ComputeUsageReceiptV1 codec and low-S secp256k1 channel-signature verification;
+- inactive validated transition planners for Open, Settle, and Refund;
+- inactive atomic transition application helpers for Open, Settle, and Refund;
+- Open application locks exactly `authorized_amount`, consumes the planned funding-account nonce, and creates the committed OPEN channel;
+- Settle application binds to the exact planned pre-transition channel state and submitter nonce, credits the worker payment plus funding refund, enforces exact value conservation, and produces only the expected SETTLED channel mutation;
+- Refund application binds to the exact planned pre-transition channel state and funding-account nonce, returns the exact remaining locked value, and produces only the expected REFUNDED channel mutation;
+- all three application helpers mutate a cloned NativeStateV2 and publish the new state only after every checked balance/nonce/channel operation succeeds, preserving rollback-on-error behavior;
+- stale Settle/Refund plans are rejected when the current channel no longer exactly matches the validated pre-state;
+- overflow and rollback-focused application tests are present alongside planner negative-path tests;
+- an inactive signed-V2 compute dispatcher now routes ComputeChannelOpen / Settle / Refund through planner -> atomic apply while rejecting every non-compute V2 action;
+- dispatcher results bind the applied transition to exact before/after NativeStateV2 roots;
+- an inactive candidate-batch executor applies multiple compute transactions against cloned state and publishes the candidate state only if every transaction succeeds;
+- failed later transactions roll back all earlier tentative batch mutations;
+- successful batch results prove state-root continuity between ordered transitions;
+- empty inactive batches are deterministic no-ops.
+
+As of green checkpoint `1e683c838444c4483c80c7ac1136accd3f69f7e6`, Rust CI passes formatting, Cargo check, **286 tests**, and Clippy. Post-Open, post-Settle, and post-Refund NativeStateV2 snapshots survive restart with exact roots, and branch tests prove detached compute effects are removed by restoring the winning branch's persisted V2 state.
+
+The runtime boundary remains unchanged:
+
+- NativeStateV2 is inactive;
+- NativeTransaction V2 is inactive;
+- no compute action is accepted by the active mempool/P2P/mining path;
+- no V2 activation height/network parameter is set;
+- no compute intrinsic gas constants are assigned;
+- no fee-bearing compute transition is active;
+- NativeStateV1 / NativeTransactionV1 behavior and locked vectors remain unchanged.
+
+Next implementation priority is the explicit **V2 block/execution integration boundary** before any activation:
+
+1. Do not feed SignedNativeTransactionV2 bytes into NativeBlockBodyV1. Its decoder is intentionally V1-only.
+2. Do not persist NativeStateV2 through NativeBlockExecutionResultV1. Its execution commitment is intentionally bound to NativeStateV1.
+3. Define a versioned successor block-body/execution boundary that can distinguish canonical V1 and V2 signed transactions without reinterpreting existing V1 bytes or roots.
+4. Define the successor execution commitment/receipt structure before binding inactive compute batches to BlockHeaderV1 persistence. Preserve the 164-byte header itself.
+5. Keep compute gas constants deliberately unset until payload/signature-verification costs and the native fee schedule are reviewed; do not invent consensus gas values locally.
+6. Keep the successor body/execution path inactive and disconnected from mempool/P2P/mining until activation rules and vectors exist.
+7. Keep Jobs, prompts, WorkerAdvertisements, pricing, PaymentAuthorization, ResultCommitmentV2, and ordinary ComputeUsageReceipt exchange off-chain.
+8. Do not add worker/operator on-chain registration or bonds to the first ordinary paid-compute milestone.
+9. Preserve CPU-PoW cumulative-work fork choice, P2P V3's active V1 behavior, and all locked V1 transaction/execution/state vectors.
 
 Deliberate consensus review still needed for RandomX stock miner/pool interoperability, public-testnet RandomX epoch/seed parameters, remaining monetary constants, genesis/network parameters, and chain-ID finalization.
+
+## AI architecture redesign — current locked direction
+
+The first decentralized AI milestone has been simplified substantially:
+
+- ordinary AI inference does **not** require decentralized storage;
+- wallet/client-local encrypted chat history and Agent memory are the V1 default;
+- the wallet is the V1 Agent home/control plane;
+- workers are replaceable execution providers, not persistent Agent hosts;
+- ordinary worker selection is wallet-local from signed expiring advertisements, not a blockchain consensus lottery;
+- one ComputeSession uses one selected worker for a bounded sticky period;
+- one ComputeChannel is bound to one worker/operator and aggregates many Jobs;
+- ordinary SMALL/STANDARD Jobs, Job acceptance, token streaming, ResultCommitmentV2, pricing, PaymentAuthorization, and ComputeUsageReceipt exchange remain off-chain;
+- the base chain normally sees only channel open/funding and final settlement/refund;
+- worker/operator chain registration and service bonds are deferred from the first ordinary paid-compute milestone;
+- NativeTransaction schema V2 candidate actions are ComputeChannelOpen/Settle/Refund; V1 actions are not reinterpreted;
+- NativeStateV2 is an explicit future successor that commits accounts + compute channels without changing NativeStateV1 vectors;
+- P2P V3 + NativeBlockBodyV1 are already implemented and remain the active V1 transport baseline while compute-channel work stays inactive.
+
+Relevant new specs include:
+
+- `spec/job.md` (Job schema V2);
+- `spec/result-commitment.md` (ResultCommitment schema V2);
+- `spec/worker-advertisement-v1.md`;
+- `spec/worker-discovery-v1.md`;
+- `spec/worker-selection-v1.md`;
+- `spec/compute-session-v1.md`;
+- `spec/ai-transport-v1.md`;
+- `spec/compute-pricing-v1.md`;
+- `spec/compute-payment-risk-v1.md`;
+- `spec/compute-channel-v1.md`;
+- `spec/payment-authorization-v1.md`;
+- `spec/compute-usage-receipt-v1.md`;
+- `spec/job-lifecycle-boundary-v1.md`;
+- `spec/native-compute-settlement-v1.md`;
+- `spec/native-compute-action-payloads-v1.md`;
+- `spec/native-transaction-v2-compute-actions.md`;
+- `spec/native-state-v2-compute-channels.md`;
+- `spec/native-block-body-v1.md`;
+- `spec/p2p-native-block-transfer-v3.md`.
 
 ## Documentation model
 
@@ -187,6 +317,18 @@ Deliberate consensus review still needed for RandomX stock miner/pool interopera
 - `niahcia/niahcia-compute` — replaceable GPU/accelerator execution-host behavior and operational documentation.
 
 Protocol-visible implementation changes update the canonical repository and any retained mirror that carries the same protocol material.
+
+## Repository cleanup audit
+
+Repository cleanup audit completed after the native-execution migration:
+
+- obsolete Reth/Engine-API/JWT configuration and CLI guidance removed;
+- unknown TOML fields now fail closed instead of silently accepting stale settings;
+- obsolete Reth devnet helper scripts and Reth-dependent smoke/handoff files removed;
+- README, roadmap, architecture, configuration, build, milestone, repository-family, and prototype documentation realigned to the native-chain architecture;
+- current dev guidance now treats native execution/P2P V3 as active and ComputeChannel V2 work as inactive.
+
+Keep the cleanup head green before resuming compute-dispatcher implementation; if a later head fails CI, diagnose that head rather than relying on an older green checkpoint.
 
 ## Development doctrine
 
@@ -237,6 +379,9 @@ If asked simply to continue: inspect current `main` and CI, read this handoff an
 - `spec/address-v1.md`
 - `spec/network-parameters-v1.md`
 - `spec/block-header-v1.md`
+- `spec/native-transaction-v1.md`
+- `spec/native-execution-v1.md`
+- `spec/p2p-native-block-transfer-v2.md`
 - `spec/randomx-pow-v1.md`
 - `spec/canonical-serialization.md`
 - `spec/domain-separation.md`
