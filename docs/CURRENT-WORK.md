@@ -191,15 +191,15 @@ Already reserved in NativeTransaction V1:
 
 Still required before those actions can be activated:
 
-- a versioned native contract runtime/code format;
-- canonical contract state/storage commitments;
-- deterministic create/call/revert/failure semantics;
-- native-value semantics for contract execution;
-- bounded deterministic memory and instruction/resource metering;
-- contract gas schedule;
-- receipts/execution commitments;
-- persistence/restart/reorg behavior;
-- canonical vectors and an explicit activation/version boundary.
+- accepted-transaction nonce/value/fee semantics around the now-inactive constructor transition;
+- deterministic ContractCall transition semantics;
+- contract receipts/execution commitments;
+- persistence/restart/reorg behavior for NativeStateV3;
+- canonical create/call/failure vectors and an explicit activation/version boundary.
+
+NVM1's candidate execution surface now has deterministic stack/control, bounded byte memory, caller representation, persistent storage isolation, KECCAK256, RETURN/REVERT, and a vectored gas schedule. CALL_VALUE preserves the full native u128 value domain as a 32-byte stack value rather than truncating it to u64.
+
+Inactive ContractCreate constructor execution now exists as a state-effect transition: it validates NVM1 code, derives the locked contract address, runs init_data with empty storage, commits code/value/storage only on STOP/RETURN, and leaves NativeStateV3 unchanged on REVERT/trap/OOG. Account nonce/value debit and transaction-fee effects intentionally remain outside this helper until their accepted-failure rules are specified.
 
 Consensus contract execution must not perform AI inference or depend on external network/filesystem/wall-clock services. Off-chain AI may provide signed/committed evidence to contracts only through explicitly specified deterministic verification rules.
 
@@ -251,7 +251,7 @@ The inactive NativeStateV2 / NativeTransactionV2 compute-channel foundation is n
 - NativeReceiptV2 commits transaction schema version, action, transaction ID, exact post-transaction NativeStateV2 root, gas, and fee accounting;
 - NativeBlockExecutionResultV2 now provides domain-separated V2 receipt and execution commitments with strict canonical round-trip validation and tamper rejection.
 
-As of green checkpoint `92903d619ce5b52eef351e45a31c22f246eec9e0`, Rust CI passes formatting, Cargo check, **343 tests**, and Clippy. Runtime ID 1 is now reserved for candidate NVM1; its code container, opcode identities/operand widths, instruction-count/stack bounds, and instruction-index jump targets are vectored and statically validated. NVM1 execution semantics, stack effects, memory model, failure behavior, and gas remain inactive and are the next contract-runtime milestone.
+As of green checkpoint `4acc8108458779287fe27256f93c4fd3935ea34a`, Rust CI passes formatting, Cargo check, **371 tests**, and Clippy. NVM1 CALL_VALUE preserves the full native u128 amount; inactive ContractCreate constructor execution now validates NVM1, derives the locked contract address, executes init_data, commits code/value/storage only on STOP/RETURN, and leaves NativeStateV3 unchanged on REVERT/trap/OOG. Account nonce/value debit and transaction-fee effects remain deliberately outside the constructor-state helper.
 
 The runtime boundary remains unchanged:
 
